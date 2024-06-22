@@ -11,12 +11,12 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000',
+        url: `http://localhost:${process.env.PORT || 3000}`,
         description: 'Development server',
       },
     ],
   },
-  apis: ['./src/routes/*.ts'], // routes klasöründeki tüm TypeScript dosyalarını tarıyor
+  apis: ['./src/routes/*.ts', './src/server.ts'], // Tüm route dosyalarını ve server.ts'yi tarıyor
 };
 
 const specs = swaggerJsdoc(options);
