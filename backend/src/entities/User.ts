@@ -4,65 +4,71 @@ import * as bcrypt from "bcrypt";
 
 @Entity("users")
 export class User {
-    @PrimaryGeneratedColumn("uuid")
-    id!: string;
+  @PrimaryGeneratedColumn("uuid")
+  id!: string;
 
-    @Column({ unique: true })
-    @IsEmail()
-    email!: string;
+  @Column({ unique: true })
+  @IsEmail()
+  email!: string;
 
-    @Column()
-    @MinLength(8)
-    @MaxLength(100)
-    password!: string;
+  @Column()
+  @MinLength(8)
+  @MaxLength(100)
+  password!: string;
 
-    @Column()
-    @MinLength(2)
-    @MaxLength(50)
-    firstName!: string;
+  @Column()
+  @MinLength(2)
+  @MaxLength(50)
+  firstName!: string;
 
-    @Column()
-    @MinLength(2)
-    @MaxLength(50)
-    lastName!: string;
+  @Column()
+  @MinLength(2)
+  @MaxLength(50)
+  lastName!: string;
 
-    @Column({ nullable: true })
-    @MaxLength(15)
-    phoneNumber?: string;
+  @Column({ nullable: true })
+  @MaxLength(15)
+  phoneNumber?: string;
 
-    @Column({ default: false })
-    isEmailVerified!: boolean;
+  @Column({ default: false })
+  isEmailVerified!: boolean;
 
-    @Column({ default: "user" })
-    role!: string;
+  @Column({ default: "user" })
+  role!: string;
 
-    @Column({ nullable: true })
-    lastLoginAt?: Date;
+  @Column({ nullable: true })
+  lastLoginAt?: Date;
 
-    @CreateDateColumn()
-    createdAt!: Date;
+  @CreateDateColumn()
+  createdAt!: Date;
 
-    @UpdateDateColumn()
-    updatedAt!: Date;
+  @UpdateDateColumn()
+  updatedAt!: Date;
 
-    @BeforeInsert()
-    @BeforeUpdate()
-    async hashPassword() {
-        if (this.password) {
-            this.password = await bcrypt.hash(this.password, 10);
-        }
+  @Column({ nullable: true })
+  emailVerificationToken?: string;
+
+  @Column({ nullable: true })
+  emailVerificationTokenExpires?: Date;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  async hashPassword() {
+    if (this.password) {
+      this.password = await bcrypt.hash(this.password, 10);
     }
+  }
 
-    async validatePassword(password: string): Promise<boolean> {
-        return bcrypt.compare(password, this.password);
-    }
+  async validatePassword(password: string): Promise<boolean> {
+    return bcrypt.compare(password, this.password);
+  }
 
-    getFullName(): string {
-        return `${this.firstName} ${this.lastName}`;
-    }
+  getFullName(): string {
+    return `${this.firstName} ${this.lastName}`;
+  }
 
-    toJSON() {
-        const { password, ...userWithoutPassword } = this;
-        return userWithoutPassword;
-    }
+  toJSON() {
+    const { password, emailVerificationToken, emailVerificationTokenExpires, ...userWithoutSensitiveInfo } = this;
+    return userWithoutSensitiveInfo;
+  }
 }
