@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import { AppDataSource } from "./data-source";
 import userRoutes from './routes/userRoutes';
 import authRoutes from './routes/authRoutes';
+import { specs, swaggerUi } from './swagger';
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // Error handling middleware
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
