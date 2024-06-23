@@ -7,13 +7,16 @@ import { v4 as uuidv4 } from 'uuid';
 import { EmailService } from "./EmailService";
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
+import { WebSocketServer } from '../websocket/socketServer';
 
 export class UserService {
   private userRepository = AppDataSource.getRepository(User);
   private emailService: EmailService;
+  private webSocketServer: WebSocketServer;
 
-  constructor() {
+  constructor(webSocketServer: WebSocketServer) {
     this.emailService = new EmailService();
+    this.webSocketServer = webSocketServer;
   }
 
   async createUser(userData: Partial<User>): Promise<User> {
@@ -29,6 +32,8 @@ export class UserService {
     await this.userRepository.save(user);
     
     await this.emailService.sendVerificationEmail(user.email, user.emailVerificationToken);
+    
+    this.webSocketServer.broadcastToAll('new_user_registered', { userId: user.id });
     
     return user;
   }
@@ -56,7 +61,9 @@ export class UserService {
     if (errors.length > 0) {
       throw new BadRequestError(`Validation failed: ${errors.toString()}`);
     }
-    return this.userRepository.save(user);
+    const updatedUser = await this.userRepository.save(user);
+    this.webSocketServer.sendToUser(id, 'user_updated', { userId: id });
+    return updatedUser;
   }
 
   async deleteUser(id: string): Promise<void> {
@@ -64,6 +71,7 @@ export class UserService {
     if (result.affected === 0) {
       throw new NotFoundError("User not found");
     }
+    this.webSocketServer.broadcastToAll('user_deleted', { userId: id });
   }
 
   async verifyEmail(token: string): Promise<User> {
@@ -80,7 +88,9 @@ export class UserService {
     user.emailVerificationToken = undefined;
     user.emailVerificationTokenExpires = undefined;
     
-    return this.userRepository.save(user);
+    const verifiedUser = await this.userRepository.save(user);
+    this.webSocketServer.sendToUser(verifiedUser.id, 'email_verified', { userId: verifiedUser.id });
+    return verifiedUser;
   }
 
   async updateLastLogin(id: string): Promise<User> {
@@ -95,12 +105,13 @@ export class UserService {
     if (!isPasswordValid) {
       throw new UnauthorizedError("Current password is incorrect");
     }
-    user.password = newPassword;
+    user.password = await bcrypt.hash(newPassword, 10);
     const errors = await validate(user);
     if (errors.length > 0) {
       throw new BadRequestError(`Validation failed: ${errors.toString()}`);
     }
     await this.userRepository.save(user);
+    this.webSocketServer.sendToUser(userId, 'password_changed', { userId });
   }
 
   async resendVerificationEmail(userId: string): Promise<void> {
@@ -127,13 +138,13 @@ export class UserService {
     await this.emailService.sendResetPasswordEmail(user.email, user.resetPasswordToken);
   }
 
-  async resetPassword(token: string, newPassword: string): Promise<void> {
+  async resetPassword(token: string, newPassword: string): Promise<User> {
     const user = await this.userRepository.findOne({ where: { resetPasswordToken: token } });
     if (!user || !user.resetPasswordTokenExpires || user.resetPasswordTokenExpires < new Date()) {
       throw new BadRequestError("Invalid or expired password reset token");
     }
 
-    user.password = newPassword;
+    user.password = await bcrypt.hash(newPassword, 10);
     user.resetPasswordToken = undefined;
     user.resetPasswordTokenExpires = undefined;
 
@@ -142,7 +153,9 @@ export class UserService {
       throw new BadRequestError(`Validation failed: ${errors.toString()}`);
     }
 
-    await this.userRepository.save(user);
+    const updatedUser = await this.userRepository.save(user);
+    this.webSocketServer.sendToUser(user.id, 'password_reset', { userId: user.id });
+    return updatedUser;
   }
 
   async generateTwoFactorSecret(userId: string): Promise<{ secret: string, otpauthUrl: string, qrCodeUrl: string }> {
@@ -155,6 +168,7 @@ export class UserService {
     const otpauthUrl = secret.otpauth_url || `otpauth://totp/YourAppName:${user.email}?secret=${secret.base32}&issuer=YourAppName`;
     const qrCodeUrl = await qrcode.toDataURL(otpauthUrl);
 
+    this.webSocketServer.sendToUser(userId, 'two_factor_secret_generated', { userId });
     return { secret: secret.base32, otpauthUrl, qrCodeUrl };
   }
 
@@ -174,6 +188,7 @@ export class UserService {
     if (verified) {
       user.isTwoFactorEnabled = true;
       await this.userRepository.save(user);
+      this.webSocketServer.sendToUser(userId, 'two_factor_enabled', { userId });
     }
 
     return verified;
@@ -184,6 +199,7 @@ export class UserService {
     user.twoFactorSecret = undefined;
     user.isTwoFactorEnabled = false;
     await this.userRepository.save(user);
+    this.webSocketServer.sendToUser(userId, 'two_factor_disabled', { userId });
   }
 
   private generateToken(): string {

@@ -3,12 +3,13 @@ import { UserService } from './UserService';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import { BadRequestError, UnauthorizedError } from '../utils/errors';
+import { WebSocketServer } from '../websocket/socketServer';
 
 export class AuthService {
     private userService: UserService;
 
-    constructor() {
-        this.userService = new UserService();
+    constructor(webSocketServer: WebSocketServer) {
+        this.userService = new UserService(webSocketServer);
     }
 
     async validateUser(email: string, password: string): Promise<User | null> {

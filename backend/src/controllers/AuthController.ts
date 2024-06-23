@@ -3,14 +3,17 @@ import { AuthService } from '../services/AuthService';
 import { UserService } from '../services/UserService';
 import passport from 'passport';
 import { User } from '../entities/User';
+import { WebSocketServer } from '../websocket/socketServer';
 
 export class AuthController {
     private authService: AuthService;
     private userService: UserService;
+    private webSocketServer: WebSocketServer;
 
-    constructor() {
-        this.authService = new AuthService();
-        this.userService = new UserService();
+    constructor(webSocketServer: WebSocketServer) {
+        this.webSocketServer = webSocketServer;
+        this.authService = new AuthService(webSocketServer);
+        this.userService = new UserService(webSocketServer);
     }
 
     async login(req: Request, res: Response, next: NextFunction) {
@@ -46,7 +49,7 @@ export class AuthController {
     async resetPassword(req: Request, res: Response, next: NextFunction) {
         try {
             const { token, newPassword } = req.body;
-            await this.userService.resetPassword(token, newPassword);
+            const user = await this.userService.resetPassword(token, newPassword);
             res.json({ message: "Password has been reset successfully." });
         } catch (error) {
             next(error);
@@ -104,7 +107,7 @@ export class AuthController {
     async oauthCallback(req: Request, res: Response, next: NextFunction) {
         try {
             const user = req.user as User;
-            const provider = req.query.provider as 'google' | 'facebook'; // Provider bilgisini query parametrelerinden alın
+            const provider = req.query.provider as 'google' | 'facebook';
             const result = await this.authService.handleSocialLogin(user, provider);
             res.redirect(`${process.env.FRONTEND_URL}/oauth-success?token=${result.token}&refreshToken=${result.refreshToken}`);
         } catch (error) {

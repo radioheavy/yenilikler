@@ -13,6 +13,8 @@ import passport from './config/passport';
 import https from 'https';
 import fs from 'fs';
 import path from 'path';
+import { Server as SocketServer } from 'socket.io';
+import { WebSocketServer } from './websocket/socketServer';
 
 dotenv.config();
 
@@ -35,51 +37,52 @@ app.use(express.urlencoded({ extended: true }));
 app.use(loggerMiddleware);
 app.use(passport.initialize());
 
-// Routes
-app.use('/api/users', userRoutes);
-app.use('/api/auth', authRoutes);
-
-// Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
-
-/**
- * @swagger
- * /:
- *   get:
- *     summary: Welcome message
- *     tags: [Root]
- *     responses:
- *       200:
- *         description: Welcome to Kifobu API
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- */
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to Kifobu API' });
-});
-
-// Error handling middleware
-app.use(errorHandler);
+// Initialize WebSocket
+let webSocketServer: WebSocketServer;
 
 // Database connection and server start
 AppDataSource.initialize()
   .then(() => {
     logger.info("Data Source has been initialized!");
     const PORT = process.env.PORT || 3000;
-    
+
     // Create HTTPS server
-    https.createServer(options, app).listen(PORT, () => {
+    const server = https.createServer(options, app);
+
+    // Initialize WebSocket
+    webSocketServer = new WebSocketServer(server);
+
+    // Routes
+    app.use('/api/users', userRoutes(webSocketServer));
+    app.use('/api/auth', authRoutes(webSocketServer));
+
+    // Swagger UI
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
+    app.get('/', (req, res) => {
+      res.json({ message: 'Welcome to Kifobu API' });
+    });
+
+    // Test WebSocket endpoint
+    app.get('/test-websocket', (req, res) => {
+      if (webSocketServer) {
+        res.json({ message: 'WebSocket server is running' });
+      } else {
+        res.status(500).json({ message: 'WebSocket server is not initialized' });
+      }
+    });
+
+    // Error handling middleware
+    app.use(errorHandler);
+
+    server.listen(PORT, () => {
       logger.info(`Server is running on https://kifobu.com:${PORT}`);
       logger.info(`Swagger UI is available at https://kifobu.com:${PORT}/api-docs`);
+      logger.info('WebSocket server is running');
     });
   })
   .catch((err) => {
     logger.error("Error during Data Source initialization", err);
   });
 
-export default app;
+export { webSocketServer };

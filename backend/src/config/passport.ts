@@ -2,8 +2,9 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as FacebookStrategy } from 'passport-facebook';
 import { UserService } from '../services/UserService';
+import { webSocketServer } from '../server'; // WebSocketServer instance'ını import ediyoruz
 
-const userService = new UserService();
+const userService = new UserService(webSocketServer);
 
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
