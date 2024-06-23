@@ -5,6 +5,13 @@ import helmet from 'helmet';
 import { AppDataSource } from "./data-source";
 import userRoutes from './routes/userRoutes';
 import authRoutes from './routes/authRoutes';
+import campaignRoutes from './routes/campaignRoutes';
+import financialDetailsRoutes from './routes/financialDetailsRoutes';
+import datesRoutes from './routes/datesRoutes';
+import investorStatsRoutes from './routes/investorStatsRoutes';
+import shareDetailsRoutes from './routes/shareDetailsRoutes';
+import currencyDataRoutes from './routes/currencyDataRoutes';
+import companyRoutes from './routes/companyRoutes';
 import { specs, swaggerUi } from './swagger';
 import debug from 'debug';
 import { loggerMiddleware } from './middlewares/logger.middleware';
@@ -57,6 +64,13 @@ AppDataSource.initialize()
     // Routes
     app.use('/api/users', userRoutes(webSocketServer));
     app.use('/api/auth', authRoutes(webSocketServer));
+    app.use('/api/campaigns', campaignRoutes(webSocketServer));
+    app.use('/api/companies', companyRoutes(webSocketServer));
+    app.use('/api/currency-data', currencyDataRoutes(webSocketServer));
+    app.use('/api/dates', datesRoutes(webSocketServer));
+    app.use('/api/financial-details', financialDetailsRoutes(webSocketServer));
+    app.use('/api/investor-stats', investorStatsRoutes(webSocketServer));
+    app.use('/api/share-details', shareDetailsRoutes(webSocketServer));
 
     // Swagger UI
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));

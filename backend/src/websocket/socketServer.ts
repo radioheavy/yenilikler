@@ -63,4 +63,9 @@ export class WebSocketServer {
   public broadcastToAll(event: string, data: any): void {
     this.io.emit(event, data);
   }
+
+  // 'emit' metodu ekleme
+  public emit(event: string, data: any): void {
+    this.io.emit(event, data);
+  }
 }

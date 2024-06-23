@@ -1,0 +1,40 @@
+Campaign Model;  Kampanya (Girişim) : Kampanya adı,
+Kampanya Durumu: kampanyanın tamamlanmasına kalan süre, fonlamanın başarılı mı başarısız mı verisi,
+Sektör: Kampanyaya giren şirketin hizmet verdiği sektör,
+Platform: Kampanyanın fonlandığı kitlesel fonlama platformunun adı,
+Kampanya minimum yatırım tutarı,
+Pay / Arz oranı: Girişimin % olarak kaçta kaçı arz oluyor.
+İmtiyazlar: Statik metin verisi işlenecektir,
+Taahhütler: Statik metin verisi işlenecektir,
+Bedelsiz pay: Statik metin verisi işlenecektir.
+Hedeflenen: Kampanyanın hedeflediği fon tutarı,
+Alınan: Alınan fonlama tutarı,
+Gerçekleşen: Formül: “ 1-(Hedeflenen - Alınan) / Hedeflenen
+Fazladan Fonlama Tutarı: Hedeflenen tutarın üstünde kalan tutar belirtilir. Kalan Fonlama Tutarı: Hedeflenen tutara kalan tutar belirtilir.
+Değerleme(TRY): Hedeflenen / Arz Oranı,
+Değerleme (USD): Değerleme(TRY) / Kampanya başlangıç tarihi dolar kuru,
+Değerleme (EUR): Değerleme(TRY) / Kampanya başlangıç tarihi euro kuru,
+Kampanya başlangıç tarihi: Kampanyanın başladığı tarihtir,
+Kampanya bitiş tarihi: Kampanyanın bitiş tarihidir,
+Toplam Yatırımcı Sayısı: Yatırım yapan kullanıcı sayısı,
+Nitelikli Yatırımcı Sayısı,
+Niteliksiz Yatırımcı Sayısı,
+Ortalama yatırım tutarı: Alınan / Yatırımcı sayısı
+Pay Grubu: Hisse pay grubudur.
+Sermaye: Şirket kuruluş sermayesidir. Fonlama sonrasında fonlanan tutar da eklenecektir otomatik olarak.
+Dağıtım Pay Fiyatı (TRY): MKK verisi eklenecektir. Statiktir.
+Dağıtım Pay Fiyatı (USD): Kampanya başlangıç tarihindeki TRY birim fiyatının USD Karşılığı  .
+Dağıtım Pay Fiyatı (EUR): Kampanya başlangıç tarihindeki TRY birim fiyatının EUR Karşılığı .
+Enflasyon (TRY): Tahmini Güncel Pay Değeri, Formül: Dağıtım Pay Fiyatı + (Dağıtım Pay Fiyatı * (USD Değişim + EUR Değişimi) / 2) ve USD Değişim Formülü: USD Bugün Fiyat - Kampanya Başlangıç tarihi Usd fiyat)/ Kampanya Başlangıç Günü USD fiyat ve EUR Değişimi formül: EUR Bugün Fiyat - Kampanya Başlangıç tarihi EUR fiyat)/ Kampanya Başlangıç Günü EUR fiyat.
+Enflasyon (USD): PAY DAĞITIM TUTARI + (PAY DAĞITIM TUTARI  * USD DEĞİŞİMİ).
+Enflasyon (EUR): PAY DAĞITIM TUTARI + (PAY DAĞITIM TUTARI  * EUR DEĞİŞİMİ).
+Kampanya Başlangıç günü USD,
+Kampanya Başlangıç günü EUR,
+USD DEĞİŞİM: FORMÜL: USD BUGÜN FİYAT / KAMPANYA BAŞLANGIÇ GÜNÜ USD
+EUR DEĞİŞİM: FORMÜL: EUR BUGÜN FİYAT / KAMPANYA BAŞLANGIÇ GÜNÜ EUR
+BUGÜN DOLAR KURU:
+BUGÜN EURO KURU:
+Girişim kodu: İlan Kodu
+Şirket Adı: Ticari Sicil adı
+Şirkete Ait sosyal medya linkleri: Facebook, instagram, linkedin, x, ve fonlama sayfasının linki, web sitesi linkleri bulunmalıdır.
+
