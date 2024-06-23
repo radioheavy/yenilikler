@@ -6,17 +6,19 @@ import { AppDataSource } from "./data-source";
 import userRoutes from './routes/userRoutes';
 import authRoutes from './routes/authRoutes';
 import { specs, swaggerUi } from './swagger';
-import logger from './utils/logger';
+import debug from 'debug';
 import { loggerMiddleware } from './middlewares/logger.middleware';
 import { errorHandler } from './middlewares/error.middleware';
 import passport from './config/passport';
 import https from 'https';
 import fs from 'fs';
 import path from 'path';
-import { Server as SocketServer } from 'socket.io';
 import { WebSocketServer } from './websocket/socketServer';
 
 dotenv.config();
+
+const log = debug('app:server');
+const dbLog = debug('app:database');
 
 const app = express();
 
@@ -43,7 +45,7 @@ let webSocketServer: WebSocketServer;
 // Database connection and server start
 AppDataSource.initialize()
   .then(() => {
-    logger.info("Data Source has been initialized!");
+    dbLog("Data Source has been initialized!");
     const PORT = process.env.PORT || 3000;
 
     // Create HTTPS server
@@ -76,13 +78,13 @@ AppDataSource.initialize()
     app.use(errorHandler);
 
     server.listen(PORT, () => {
-      logger.info(`Server is running on https://kifobu.com:${PORT}`);
-      logger.info(`Swagger UI is available at https://kifobu.com:${PORT}/api-docs`);
-      logger.info('WebSocket server is running');
+      log(`Server is running on https://kifobu.com:${PORT}`);
+      log(`Swagger UI is available at https://kifobu.com:${PORT}/api-docs`);
+      log('WebSocket server is running');
     });
   })
   .catch((err) => {
-    logger.error("Error during Data Source initialization", err);
+    dbLog("Error during Data Source initialization", err);
   });
 
 export { webSocketServer };
