@@ -5,6 +5,8 @@ import { BadRequestError, NotFoundError, UnauthorizedError } from "../utils/erro
 import * as bcrypt from "bcrypt";
 import { v4 as uuidv4 } from 'uuid';
 import { EmailService } from "./EmailService";
+import * as speakeasy from 'speakeasy';
+import * as qrcode from 'qrcode';
 
 export class UserService {
   private userRepository = AppDataSource.getRepository(User);
@@ -140,6 +142,47 @@ export class UserService {
       throw new BadRequestError(`Validation failed: ${errors.toString()}`);
     }
 
+    await this.userRepository.save(user);
+  }
+
+  async generateTwoFactorSecret(userId: string): Promise<{ secret: string, otpauthUrl: string, qrCodeUrl: string }> {
+    const user = await this.findUserById(userId);
+    
+    const secret = speakeasy.generateSecret({ name: `YourAppName:${user.email}` });
+    user.twoFactorSecret = secret.base32;
+    await this.userRepository.save(user);
+
+    const otpauthUrl = secret.otpauth_url || `otpauth://totp/YourAppName:${user.email}?secret=${secret.base32}&issuer=YourAppName`;
+    const qrCodeUrl = await qrcode.toDataURL(otpauthUrl);
+
+    return { secret: secret.base32, otpauthUrl, qrCodeUrl };
+  }
+
+  async verifyTwoFactorToken(userId: string, token: string): Promise<boolean> {
+    const user = await this.findUserById(userId);
+    
+    if (!user.twoFactorSecret) {
+      throw new BadRequestError("Two-factor authentication is not set up for this user");
+    }
+
+    const verified = speakeasy.totp.verify({
+      secret: user.twoFactorSecret,
+      encoding: 'base32',
+      token: token
+    });
+
+    if (verified) {
+      user.isTwoFactorEnabled = true;
+      await this.userRepository.save(user);
+    }
+
+    return verified;
+  }
+
+  async disableTwoFactor(userId: string): Promise<void> {
+    const user = await this.findUserById(userId);
+    user.twoFactorSecret = undefined;
+    user.isTwoFactorEnabled = false;
     await this.userRepository.save(user);
   }
 

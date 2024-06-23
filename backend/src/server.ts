@@ -9,17 +9,31 @@ import { specs, swaggerUi } from './swagger';
 import logger from './utils/logger';
 import { loggerMiddleware } from './middlewares/logger.middleware';
 import { errorHandler } from './middlewares/error.middleware';
+import passport from './config/passport';
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
 const app = express();
 
+// SSL options
+const options = {
+  key: fs.readFileSync(path.join(__dirname, '../kifobu.com-key.pem')),
+  cert: fs.readFileSync(path.join(__dirname, '../kifobu.com.pem'))
+};
+
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['https://localhost:3000', 'https://kifobu.com:3000'],
+  credentials: true
+}));
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(loggerMiddleware);
+app.use(passport.initialize());
 
 // Routes
 app.use('/api/users', userRoutes);
@@ -57,9 +71,11 @@ AppDataSource.initialize()
   .then(() => {
     logger.info("Data Source has been initialized!");
     const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-      logger.info(`Server is running on port ${PORT}`);
-      logger.info(`Swagger UI is available at http://localhost:${PORT}/api-docs`);
+    
+    // Create HTTPS server
+    https.createServer(options, app).listen(PORT, () => {
+      logger.info(`Server is running on https://kifobu.com:${PORT}`);
+      logger.info(`Swagger UI is available at https://kifobu.com:${PORT}/api-docs`);
     });
   })
   .catch((err) => {

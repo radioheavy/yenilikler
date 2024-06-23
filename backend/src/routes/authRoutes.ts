@@ -1,142 +1,26 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { AuthController } from '../controllers/AuthController';
+import { authenticateToken } from '../middlewares/authMiddleware';
+import passport from 'passport';
 
 const router = Router();
 const authController = new AuthController();
 
-/**
- * @swagger
- * tags:
- *   name: Authentication
- *   description: User authentication
- */
+router.post('/login', authController.login.bind(authController));
+router.post('/refresh-token', authController.refreshToken.bind(authController));
+router.post('/forgot-password', authController.forgotPassword.bind(authController));
+router.post('/reset-password', authController.resetPassword.bind(authController));
+router.post('/generate-2fa', authenticateToken, authController.generateTwoFactorSecret.bind(authController));
+router.post('/verify-2fa', authController.verifyTwoFactorToken.bind(authController));
+router.post('/disable-2fa', authenticateToken, authController.disableTwoFactor.bind(authController));
+router.post('/login-2fa', authController.loginWithTwoFactor.bind(authController));
 
-/**
- * @swagger
- * /api/auth/login:
- *   post:
- *     summary: Login a user
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: Login successful
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 user:
- *                   $ref: '#/components/schemas/User'
- *                 token:
- *                   type: string
- *                 refreshToken:
- *                   type: string
- *       401:
- *         description: Invalid credentials
- *       400:
- *         description: Bad request
- */
-router.post('/login', (req: Request, res: Response, next: NextFunction) => authController.login(req, res, next));
+// Google OAuth routes
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/oauth/google/callback', passport.authenticate('google', { session: false, failureRedirect: '/' }), authController.oauthCallback.bind(authController));
 
-/**
- * @swagger
- * /api/auth/refresh-token:
- *   post:
- *     summary: Refresh access token
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - refreshToken
- *             properties:
- *               refreshToken:
- *                 type: string
- *     responses:
- *       200:
- *         description: New access token generated
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 token:
- *                   type: string
- *       401:
- *         description: Invalid or expired refresh token
- *       400:
- *         description: Bad request
- */
-router.post('/refresh-token', (req: Request, res: Response, next: NextFunction) => authController.refreshToken(req, res, next));
-
-/**
- * @swagger
- * /api/auth/forgot-password:
- *   post:
- *     summary: Request password reset
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *             properties:
- *               email:
- *                 type: string
- *     responses:
- *       200:
- *         description: Password reset email sent
- *       400:
- *         description: Bad request
- */
-router.post('/forgot-password', (req: Request, res: Response, next: NextFunction) => authController.forgotPassword(req, res, next));
-
-/**
- * @swagger
- * /api/auth/reset-password:
- *   post:
- *     summary: Reset password
- *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - token
- *               - newPassword
- *             properties:
- *               token:
- *                 type: string
- *               newPassword:
- *                 type: string
- *     responses:
- *       200:
- *         description: Password reset successful
- *       400:
- *         description: Bad request or invalid token
- */
-router.post('/reset-password', (req: Request, res: Response, next: NextFunction) => authController.resetPassword(req, res, next));
+// Facebook OAuth routes
+router.get('/facebook', passport.authenticate('facebook', { scope: ['email'] }));
+router.get('/oauth/facebook/callback', passport.authenticate('facebook', { session: false, failureRedirect: '/' }), authController.oauthCallback.bind(authController));
 
 export default router;

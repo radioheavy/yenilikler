@@ -34,6 +34,9 @@ const userController = new UserController();
  *         role:
  *           type: string
  *           description: The user's role
+ *         isTwoFactorEnabled:
+ *           type: boolean
+ *           description: Whether two-factor authentication is enabled for the user
  *   securitySchemes:
  *     bearerAuth:
  *       type: http
@@ -278,6 +281,84 @@ router.post("/change-password", authenticateToken, (req: Request, res: Response,
  */
 router.post("/resend-verification", authenticateToken, (req: Request, res: Response, next: NextFunction) =>
   userController.resendVerificationEmail(req, res, next)
+);
+
+/**
+ * @swagger
+ * /api/users/generate-2fa:
+ *   post:
+ *     summary: Generate 2FA secret for a user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 2FA secret generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 secret:
+ *                   type: string
+ *                 otpauthUrl:
+ *                   type: string
+ *                 qrCodeUrl:
+ *                   type: string
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/generate-2fa", authenticateToken, (req: Request, res: Response, next: NextFunction) =>
+  userController.generateTwoFactorSecret(req, res, next)
+);
+
+/**
+ * @swagger
+ * /api/users/verify-2fa:
+ *   post:
+ *     summary: Verify and enable 2FA for a user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 2FA verified and enabled successfully
+ *       400:
+ *         description: Invalid 2FA token
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/verify-2fa", authenticateToken, (req: Request, res: Response, next: NextFunction) =>
+  userController.verifyTwoFactorToken(req, res, next)
+);
+
+/**
+ * @swagger
+ * /api/users/disable-2fa:
+ *   post:
+ *     summary: Disable 2FA for a user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 2FA disabled successfully
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/disable-2fa", authenticateToken, (req: Request, res: Response, next: NextFunction) =>
+  userController.disableTwoFactor(req, res, next)
 );
 
 export default router;

@@ -2,7 +2,7 @@ import { User } from '../entities/User';
 import { UserService } from './UserService';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { BadRequestError } from '../utils/errors';
+import { BadRequestError, UnauthorizedError } from '../utils/errors';
 
 export class AuthService {
     private userService: UserService;
@@ -33,11 +33,38 @@ export class AuthService {
         );
     }
 
-    async login(email: string, password: string): Promise<{ user: User, token: string, refreshToken: string }> {
+    async login(email: string, password: string): Promise<{ user: User, token: string | null, refreshToken: string | null, requiresTwoFactor: boolean }> {
         const user = await this.validateUser(email, password);
         if (!user) {
             throw new BadRequestError('Invalid email or password');
         }
+
+        if (user.isTwoFactorEnabled) {
+            return { user, token: null, refreshToken: null, requiresTwoFactor: true };
+        }
+
+        user.lastLoginAt = new Date();
+        await this.userService.updateUser(user.id, { lastLoginAt: user.lastLoginAt });
+        const token = this.generateToken(user);
+        const refreshToken = this.generateRefreshToken(user);
+        return { user, token, refreshToken, requiresTwoFactor: false };
+    }
+
+    async loginWithTwoFactor(email: string, password: string, twoFactorToken: string): Promise<{ user: User, token: string, refreshToken: string }> {
+        const user = await this.validateUser(email, password);
+        if (!user) {
+            throw new BadRequestError('Invalid email or password');
+        }
+
+        if (!user.isTwoFactorEnabled) {
+            throw new BadRequestError('Two-factor authentication is not enabled for this user');
+        }
+
+        const isValid = await this.userService.verifyTwoFactorToken(user.id, twoFactorToken);
+        if (!isValid) {
+            throw new UnauthorizedError('Invalid two-factor token');
+        }
+
         user.lastLoginAt = new Date();
         await this.userService.updateUser(user.id, { lastLoginAt: user.lastLoginAt });
         const token = this.generateToken(user);
@@ -58,5 +85,55 @@ export class AuthService {
         } catch (error) {
             throw new BadRequestError('Invalid refresh token');
         }
+    }
+
+    async verifyTwoFactorToken(userId: string, token: string): Promise<{ user: User, token: string, refreshToken: string }> {
+        const isValid = await this.userService.verifyTwoFactorToken(userId, token);
+        
+        if (!isValid) {
+            throw new UnauthorizedError("Invalid two-factor token");
+        }
+
+        const user = await this.userService.findUserById(userId);
+        user.lastLoginAt = new Date();
+        await this.userService.updateUser(user.id, { lastLoginAt: user.lastLoginAt });
+
+        const jwtToken = this.generateToken(user);
+        const refreshToken = this.generateRefreshToken(user);
+
+        return { user, token: jwtToken, refreshToken };
+    }
+
+    async generateTwoFactorSecret(userId: string): Promise<{ secret: string, otpauthUrl: string, qrCodeUrl: string }> {
+        return this.userService.generateTwoFactorSecret(userId);
+    }
+
+    async disableTwoFactor(userId: string): Promise<void> {
+        await this.userService.disableTwoFactor(userId);
+    }
+
+    async handleSocialLogin(profile: any, provider: 'google' | 'facebook'): Promise<{ user: User, token: string, refreshToken: string }> {
+        let user = await this.userService.findUserByEmail(profile.emails[0].value);
+        
+        if (!user) {
+            user = await this.userService.createUser({
+                email: profile.emails[0].value,
+                firstName: profile.name.givenName,
+                lastName: profile.name.familyName,
+                isEmailVerified: true,
+                password: Math.random().toString(36).slice(-8), // Generate a random password
+                [provider + 'Id']: profile.id
+            });
+        } else if (!user[provider + 'Id']) {
+            await this.userService.updateUser(user.id, { [provider + 'Id']: profile.id });
+        }
+
+        user.lastLoginAt = new Date();
+        await this.userService.updateUser(user.id, { lastLoginAt: user.lastLoginAt });
+
+        const token = this.generateToken(user);
+        const refreshToken = this.generateRefreshToken(user);
+
+        return { user, token, refreshToken };
     }
 }

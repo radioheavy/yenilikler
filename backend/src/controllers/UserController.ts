@@ -57,7 +57,7 @@ export class UserController {
 
   async updateProfile(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user.userId;
+      const userId = (req as any).user.id;
       const updatedUser = await this.userService.updateUser(userId, req.body);
       res.json(updatedUser);
     } catch (error) {
@@ -67,7 +67,7 @@ export class UserController {
 
   async changePassword(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user.userId;
+      const userId = (req as any).user.id;
       const { currentPassword, newPassword } = req.body;
       await this.userService.changePassword(userId, currentPassword, newPassword);
       res.status(200).json({ message: "Password changed successfully" });
@@ -78,9 +78,44 @@ export class UserController {
 
   async resendVerificationEmail(req: Request, res: Response, next: NextFunction) {
     try {
-      const userId = (req as any).user.userId;
+      const userId = (req as any).user.id;
       await this.userService.resendVerificationEmail(userId);
       res.json({ message: "Verification email resent successfully" });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async generateTwoFactorSecret(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user.id;
+      const result = await this.userService.generateTwoFactorSecret(userId);
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async verifyTwoFactorToken(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user.id;
+      const { token } = req.body;
+      const isValid = await this.userService.verifyTwoFactorToken(userId, token);
+      if (isValid) {
+        res.json({ message: "Two-factor authentication enabled successfully" });
+      } else {
+        throw new BadRequestError("Invalid two-factor token");
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async disableTwoFactor(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user.id;
+      await this.userService.disableTwoFactor(userId);
+      res.json({ message: "Two-factor authentication disabled successfully" });
     } catch (error) {
       next(error);
     }

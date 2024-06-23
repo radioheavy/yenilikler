@@ -4,6 +4,8 @@ import * as bcrypt from "bcrypt";
 
 @Entity("users")
 export class User {
+  [key: string]: any; // Dinamik indeksleme için tür tanımı
+
   @PrimaryGeneratedColumn("uuid")
   id!: string;
 
@@ -36,7 +38,7 @@ export class User {
   @Column({ default: "user" })
   role!: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'timestamp' })
   lastLoginAt?: Date;
 
   @CreateDateColumn()
@@ -45,17 +47,29 @@ export class User {
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  @Column({ nullable: true })
-  emailVerificationToken?: string;
+  @Column({ nullable: true, type: 'varchar' })
+  emailVerificationToken?: string | null;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  emailVerificationTokenExpires?: Date | null;
+
+  @Column({ nullable: true, type: 'varchar' })
+  resetPasswordToken?: string | null;
+
+  @Column({ nullable: true, type: 'timestamp' })
+  resetPasswordTokenExpires?: Date | null;
+
+  @Column({ nullable: true, type: 'varchar' })
+  twoFactorSecret?: string | null;
+
+  @Column({ default: false })
+  isTwoFactorEnabled!: boolean;
 
   @Column({ nullable: true })
-  emailVerificationTokenExpires?: Date;
+  googleId?: string;
 
   @Column({ nullable: true })
-  resetPasswordToken?: string;
-
-  @Column({ nullable: true })
-  resetPasswordTokenExpires?: Date;
+  facebookId?: string;
 
   @BeforeInsert()
   @BeforeUpdate()
@@ -74,7 +88,19 @@ export class User {
   }
 
   toJSON() {
-    const { password, emailVerificationToken, emailVerificationTokenExpires, resetPasswordToken, resetPasswordTokenExpires, ...userWithoutSensitiveInfo } = this;
-    return userWithoutSensitiveInfo;
+    return {
+      id: this.id,
+      email: this.email,
+      firstName: this.firstName,
+      lastName: this.lastName,
+      fullName: this.getFullName(),
+      phoneNumber: this.phoneNumber,
+      role: this.role,
+      isEmailVerified: this.isEmailVerified,
+      isTwoFactorEnabled: this.isTwoFactorEnabled,
+      lastLoginAt: this.lastLoginAt ? this.lastLoginAt.toISOString() : null,
+      createdAt: this.createdAt.toISOString(),
+      updatedAt: this.updatedAt.toISOString()
+    };
   }
 }
