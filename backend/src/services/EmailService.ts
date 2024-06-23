@@ -37,4 +37,28 @@ export class EmailService {
       throw new Error('Failed to send verification email');
     }
   }
+
+  async sendResetPasswordEmail(to: string, token: string): Promise<void> {
+    const resetPasswordLink = `${process.env.APP_URL}/reset-password?token=${token}`;
+
+    const mailOptions = {
+      from: process.env.EMAIL_FROM,
+      to: to,
+      subject: 'Reset Your Password',
+      html: `
+        <h1>Password Reset</h1>
+        <p>You have requested to reset your password. Please click the link below to set a new password:</p>
+        <a href="${resetPasswordLink}">Reset Password</a>
+        <p>If you didn't request this, you can safely ignore this email. Your password will remain unchanged.</p>
+        <p>This link will expire in 1 hour.</p>
+      `,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      throw new Error('Failed to send password reset email');
+    }
+  }
 }

@@ -21,7 +21,7 @@ export class UserService {
       throw new BadRequestError(`Validation failed: ${errors.toString()}`);
     }
     
-    user.emailVerificationToken = this.generateVerificationToken();
+    user.emailVerificationToken = this.generateToken();
     user.emailVerificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 saat geçerli
 
     await this.userRepository.save(user);
@@ -107,7 +107,7 @@ export class UserService {
       throw new BadRequestError("Email is already verified");
     }
     
-    user.emailVerificationToken = this.generateVerificationToken();
+    user.emailVerificationToken = this.generateToken();
     user.emailVerificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 saat geçerli
 
     await this.userRepository.save(user);
@@ -115,7 +115,35 @@ export class UserService {
     await this.emailService.sendVerificationEmail(user.email, user.emailVerificationToken);
   }
 
-  private generateVerificationToken(): string {
+  async createResetPasswordToken(email: string): Promise<void> {
+    const user = await this.findUserByEmail(email);
+    user.resetPasswordToken = this.generateToken();
+    user.resetPasswordTokenExpires = new Date(Date.now() + 3600000); // 1 saat geçerli
+
+    await this.userRepository.save(user);
+    
+    await this.emailService.sendResetPasswordEmail(user.email, user.resetPasswordToken);
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { resetPasswordToken: token } });
+    if (!user || !user.resetPasswordTokenExpires || user.resetPasswordTokenExpires < new Date()) {
+      throw new BadRequestError("Invalid or expired password reset token");
+    }
+
+    user.password = newPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordTokenExpires = undefined;
+
+    const errors = await validate(user);
+    if (errors.length > 0) {
+      throw new BadRequestError(`Validation failed: ${errors.toString()}`);
+    }
+
+    await this.userRepository.save(user);
+  }
+
+  private generateToken(): string {
     return uuidv4();
   }
 }

@@ -51,6 +51,12 @@ export class User {
   @Column({ nullable: true })
   emailVerificationTokenExpires?: Date;
 
+  @Column({ nullable: true })
+  resetPasswordToken?: string;
+
+  @Column({ nullable: true })
+  resetPasswordTokenExpires?: Date;
+
   @BeforeInsert()
   @BeforeUpdate()
   async hashPassword() {
@@ -68,7 +74,7 @@ export class User {
   }
 
   toJSON() {
-    const { password, emailVerificationToken, emailVerificationTokenExpires, ...userWithoutSensitiveInfo } = this;
+    const { password, emailVerificationToken, emailVerificationTokenExpires, resetPasswordToken, resetPasswordTokenExpires, ...userWithoutSensitiveInfo } = this;
     return userWithoutSensitiveInfo;
   }
 }
