@@ -37,7 +37,7 @@ const options = {
 
 // Middleware
 app.use(cors({
-  origin: ['https://localhost:3000', 'https://kifobu.com:3000'],
+  origin: ['https://localhost:3001', 'https://kifobu.com:3001'],
   credentials: true
 }));
 app.use(helmet());
