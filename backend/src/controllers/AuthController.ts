@@ -16,6 +16,18 @@ export class AuthController {
         this.userService = new UserService(webSocketServer);
     }
 
+    async register(req: Request, res: Response, next: NextFunction) {
+        try {
+            const user = await this.userService.createUser(req.body);
+            res.status(201).json({
+                message: "User registered successfully",
+                user: user.toJSON()
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async login(req: Request, res: Response, next: NextFunction) {
         try {
             const { email, password } = req.body;

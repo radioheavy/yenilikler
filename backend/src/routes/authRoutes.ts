@@ -16,6 +16,7 @@ export default function authRoutes(webSocketServer: WebSocketServer) {
     router.post('/verify-2fa', authController.verifyTwoFactorToken.bind(authController));
     router.post('/disable-2fa', authenticateToken, authController.disableTwoFactor.bind(authController));
     router.post('/login-2fa', authController.loginWithTwoFactor.bind(authController));
+    router.post('/register', authController.register.bind(authController));  // Yeni eklenen register rotası
 
     // Google OAuth routes
     router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
