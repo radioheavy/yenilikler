@@ -2,6 +2,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
+import csrf from 'csurf';
+import cookieParser from 'cookie-parser';
 import { AppDataSource } from "./data-source";
 import userRoutes from './routes/userRoutes';
 import authRoutes from './routes/authRoutes';
@@ -35,16 +37,30 @@ const options = {
   cert: fs.readFileSync(path.join(__dirname, '../kifobu.com.pem'))
 };
 
+// CSRF koruma middleware'ini ekleyin
+const csrfProtection = csrf({ cookie: true });
+
 // Middleware
 app.use(cors({
-  origin: ['https://localhost:3001', 'https://kifobu.com:3001'],
-  credentials: true
+  origin: 'https://localhost:3001',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
 }));
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 app.use(loggerMiddleware);
 app.use(passport.initialize());
+
+// CSRF token rotasını ekleyin
+app.get('/api/csrf-token', csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
+});
+
+// Diğer rotalarınızda da CSRF koruması kullanmak istiyorsanız:
+app.use(csrfProtection);
 
 // Initialize WebSocket
 let webSocketServer: WebSocketServer;
@@ -76,7 +92,7 @@ AppDataSource.initialize()
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
     app.get('/', (req, res) => {
-      res.json({ message: 'Welcome to Kifobu API' });
+      res.json({ message: 'KiFoBu Pek Yakında Yeni işe Alımları Duyuracak. Bugsuz günler :)' });
     });
 
     // Test WebSocket endpoint
