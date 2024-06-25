@@ -1,5 +1,3 @@
-// src/controllers/UserController.ts
-
 import { Request, Response, NextFunction } from "express";
 import { UserService } from "../services/UserService";
 import { BadRequestError, NotFoundError } from "../utils/errors";
@@ -50,8 +48,8 @@ export class UserController {
 
     async verifyEmail(req: Request, res: Response, next: NextFunction) {
         try {
-            const { token } = req.params;
-            const user = await this.userService.verifyEmail(token);
+            const { email, token } = req.body; // req.params yerine req.body kullanalım
+            const user = await this.userService.verifyEmailCode(email, token); // verifyEmail yerine verifyEmailCode kullanalım
             res.json({ message: "Email verified successfully", user });
         } catch (error) {
             next(error);
@@ -81,8 +79,8 @@ export class UserController {
 
     async resendVerificationEmail(req: Request, res: Response, next: NextFunction) {
         try {
-            const userId = (req as any).user.id;
-            await this.userService.resendVerificationEmail(userId);
+            const { email } = req.body; // req.body'den email alalım
+            await this.userService.resendVerificationEmail(email);
             res.json({ message: "Verification email resent successfully" });
         } catch (error) {
             next(error);

@@ -47,7 +47,7 @@ export class UserService {
     this.webSocketServer.broadcastToAll('new_user_registered', { userId: user.id });
 
     return user;
-}
+  }
 
   async findUserByEmail(email: string): Promise<User> {
     const user = await this.userRepository.findOne({ where: { email } });
@@ -85,8 +85,8 @@ export class UserService {
     this.webSocketServer.broadcastToAll('user_deleted', { userId: id });
   }
 
-  async verifyEmail(token: string): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { emailVerificationToken: token } });
+  async verifyEmailCode(email: string, token: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { email, emailVerificationToken: token } });
     if (!user) {
       throw new NotFoundError("Invalid verification token");
     }
@@ -125,8 +125,8 @@ export class UserService {
     this.webSocketServer.sendToUser(userId, 'password_changed', { userId });
   }
 
-  async resendVerificationEmail(userId: string): Promise<void> {
-    const user = await this.findUserById(userId);
+  async resendVerificationEmail(email: string): Promise<void> {
+    const user = await this.findUserByEmail(email);
     if (user.isEmailVerified) {
       throw new BadRequestError("Email is already verified");
     }
@@ -214,6 +214,6 @@ export class UserService {
   }
 
   private generateToken(): string {
-    return uuidv4();
+    return uuidv4().slice(0, 6); // 6 haneli doğrulama kodu
   }
 }

@@ -38,3 +38,7 @@ Girişim kodu: İlan Kodu
 Şirket Adı: Ticari Sicil adı
 Şirkete Ait sosyal medya linkleri: Facebook, instagram, linkedin, x, ve fonlama sayfasının linki, web sitesi linkleri bulunmalıdır.
 
+
+
+
+tamam sana sırasıyla dosyaları ileteceğim. ilk olarak backend tarafında şu dosyaları tam ve eksiksiz söylediğin güncellemeleri yaparak ver. ayrı

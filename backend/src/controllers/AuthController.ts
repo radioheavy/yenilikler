@@ -108,6 +108,16 @@ export class AuthController {
         }
     }
 
+    async verifyEmail(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { email, token } = req.body;
+            const user = await this.userService.verifyEmailCode(email, token);
+            res.json({ message: "Email verified successfully", user });
+        } catch (error) {
+            next(error);
+        }
+    }
+
     googleAuth(req: Request, res: Response, next: NextFunction) {
         passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
     }
