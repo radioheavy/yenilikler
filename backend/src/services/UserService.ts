@@ -27,9 +27,10 @@ export class UserService {
 
     const user = this.userRepository.create(userData);
 
-    // Şifreyi hashle
     if (user.password) {
+        console.log(`Original password: ${user.password}`); // Log the original password
         user.password = await bcrypt.hash(user.password, 10);
+        console.log(`Hashed password: ${user.password}`); // Log the hashed password
     }
 
     const errors = await validate(user);
@@ -47,9 +48,11 @@ export class UserService {
     this.webSocketServer.broadcastToAll('new_user_registered', { userId: user.id });
 
     return user;
-  }
+}
+
 
   async findUserByEmail(email: string): Promise<User> {
+    console.log(`Finding user by email: ${email}`); // Log added here
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
       throw new NotFoundError("User not found");
@@ -67,15 +70,18 @@ export class UserService {
 
   async updateUser(id: string, userData: Partial<User>): Promise<User> {
     const user = await this.findUserById(id);
+    if (userData.password) {
+        userData.password = await bcrypt.hash(userData.password, 10);
+    }
     Object.assign(user, userData);
     const errors = await validate(user);
     if (errors.length > 0) {
-      throw new BadRequestError(`Validation failed: ${errors.toString()}`);
+        throw new BadRequestError(`Validation failed: ${errors.toString()}`);
     }
     const updatedUser = await this.userRepository.save(user);
     this.webSocketServer.sendToUser(id, 'user_updated', { userId: id });
     return updatedUser;
-  }
+}
 
   async deleteUser(id: string): Promise<void> {
     const result = await this.userRepository.delete(id);

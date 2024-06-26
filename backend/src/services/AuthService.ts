@@ -14,8 +14,13 @@ export class AuthService {
 
     async validateUser(email: string, password: string): Promise<User | null> {
         const user = await this.userService.findUserByEmail(email);
-        if (user && await bcrypt.compare(password, user.password)) {
-            return user;
+        if (user) {
+            console.log(`Stored hashed password: ${user.password}`); // Log the stored hashed password
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+            console.log(`Password valid: ${isPasswordValid}`); // Log the result of password comparison
+            if (isPasswordValid) {
+                return user;
+            }
         }
         return null;
     }
@@ -35,21 +40,23 @@ export class AuthService {
     }
 
     async login(email: string, password: string): Promise<{ user: User, token: string | null, refreshToken: string | null, requiresTwoFactor: boolean }> {
+        console.log(`Login attempt for email: ${email}`); // Log login attempt
         const user = await this.validateUser(email, password);
         if (!user) {
             throw new BadRequestError('Invalid email or password');
         }
-
+    
         if (user.isTwoFactorEnabled) {
             return { user, token: null, refreshToken: null, requiresTwoFactor: true };
         }
-
+    
         user.lastLoginAt = new Date();
         await this.userService.updateUser(user.id, { lastLoginAt: user.lastLoginAt });
         const token = this.generateToken(user);
         const refreshToken = this.generateRefreshToken(user);
         return { user, token, refreshToken, requiresTwoFactor: false };
     }
+    
 
     async loginWithTwoFactor(email: string, password: string, twoFactorToken: string): Promise<{ user: User, token: string, refreshToken: string }> {
         const user = await this.validateUser(email, password);
