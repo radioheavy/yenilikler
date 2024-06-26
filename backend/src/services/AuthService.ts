@@ -13,14 +13,19 @@ export class AuthService {
     }
 
     async validateUser(email: string, password: string): Promise<User | null> {
+        console.log(`Validating user for email: ${email}`);
         const user = await this.userService.findUserByEmail(email);
         if (user) {
-            console.log(`Stored hashed password: ${user.password}`); // Log the stored hashed password
+            console.log('User found');
+            console.log('Input password:', password);
+            console.log('Stored hashed password:', user.password);
             const isPasswordValid = await bcrypt.compare(password, user.password);
-            console.log(`Password valid: ${isPasswordValid}`); // Log the result of password comparison
+            console.log('Password valid:', isPasswordValid);
             if (isPasswordValid) {
                 return user;
             }
+        } else {
+            console.log('User not found');
         }
         return null;
     }
@@ -40,21 +45,29 @@ export class AuthService {
     }
 
     async login(email: string, password: string): Promise<{ user: User, token: string | null, refreshToken: string | null, requiresTwoFactor: boolean }> {
-        console.log(`Login attempt for email: ${email}`); // Log login attempt
-        const user = await this.validateUser(email, password);
-        if (!user) {
-            throw new BadRequestError('Invalid email or password');
+        console.log(`Login attempt for email: ${email}`);
+        try {
+            const user = await this.validateUser(email, password);
+            if (!user) {
+                console.log('Invalid email or password');
+                throw new BadRequestError('Invalid email or password');
+            }
+        
+            if (user.isTwoFactorEnabled) {
+                console.log('Two-factor authentication is enabled');
+                return { user, token: null, refreshToken: null, requiresTwoFactor: true };
+            }
+        
+            user.lastLoginAt = new Date();
+            await this.userService.updateUser(user.id, { lastLoginAt: user.lastLoginAt });
+            const token = this.generateToken(user);
+            const refreshToken = this.generateRefreshToken(user);
+            console.log('Login successful');
+            return { user, token, refreshToken, requiresTwoFactor: false };
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
         }
-    
-        if (user.isTwoFactorEnabled) {
-            return { user, token: null, refreshToken: null, requiresTwoFactor: true };
-        }
-    
-        user.lastLoginAt = new Date();
-        await this.userService.updateUser(user.id, { lastLoginAt: user.lastLoginAt });
-        const token = this.generateToken(user);
-        const refreshToken = this.generateRefreshToken(user);
-        return { user, token, refreshToken, requiresTwoFactor: false };
     }
     
 

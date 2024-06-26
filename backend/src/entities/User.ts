@@ -1,6 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert, BeforeUpdate } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
 import { IsEmail, MinLength, MaxLength } from "class-validator";
-import * as bcrypt from "bcrypt";
 
 @Entity("users")
 export class User {
@@ -71,15 +70,8 @@ export class User {
   @Column({ nullable: true })
   facebookId?: string;
 
-  @BeforeInsert()
-  @BeforeUpdate()
-  async hashPassword() {
-    if (this.password) {
-      this.password = await bcrypt.hash(this.password, 10);
-    }
-  }
-
   async validatePassword(password: string): Promise<boolean> {
+    const bcrypt = require("bcrypt"); // bcrypt'i burada import ediyoruz
     return bcrypt.compare(password, this.password);
   }
 

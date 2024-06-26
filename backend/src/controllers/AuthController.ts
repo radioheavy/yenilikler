@@ -31,9 +31,12 @@ export class AuthController {
     async login(req: Request, res: Response, next: NextFunction) {
         try {
             const { email, password } = req.body;
+            console.log(`Login request received for email: ${email}`);
             const result = await this.authService.login(email, password);
+            console.log('Login result:', result);
             res.json(result);
         } catch (error) {
+            console.error('Login error in controller:', error);
             next(error);
         }
     }
@@ -70,7 +73,7 @@ export class AuthController {
 
     async generateTwoFactorSecret(req: Request, res: Response, next: NextFunction) {
         try {
-            const userId = (req as any).user.id;
+            const userId = req.user.userId;
             const result = await this.userService.generateTwoFactorSecret(userId);
             res.json(result);
         } catch (error) {
@@ -90,7 +93,7 @@ export class AuthController {
 
     async disableTwoFactor(req: Request, res: Response, next: NextFunction) {
         try {
-            const userId = (req as any).user.id;
+            const userId = req.user.userId;
             await this.userService.disableTwoFactor(userId);
             res.json({ message: "Two-factor authentication disabled successfully" });
         } catch (error) {
@@ -132,6 +135,29 @@ export class AuthController {
             const provider = req.query.provider as 'google' | 'facebook';
             const result = await this.authService.handleSocialLogin(user, provider);
             res.redirect(`${process.env.FRONTEND_URL}/oauth-success?token=${result.token}&refreshToken=${result.refreshToken}`);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Eksik olan getCurrentUser metodunu ekleyelim
+    async getCurrentUser(req: Request, res: Response, next: NextFunction) {
+        try {
+            const userId = req.user.userId; // JWT'den gelen kullanıcı ID'si
+            const user = await this.userService.findUserById(userId);
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+            res.json(user);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // Yeni eklenen checkAuth metodu
+    async checkAuth(req: Request, res: Response, next: NextFunction) {
+        try {
+            res.json({ isAuthenticated: true });
         } catch (error) {
             next(error);
         }

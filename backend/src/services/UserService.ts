@@ -22,34 +22,41 @@ export class UserService {
   async createUser(userData: Partial<User>): Promise<User> {
     const existingUser = await this.userRepository.findOne({ where: { email: userData.email } });
     if (existingUser) {
-        throw new BadRequestError("A user with this email already exists.");
+      throw new BadRequestError("A user with this email already exists.");
     }
-
+  
     const user = this.userRepository.create(userData);
-
-    if (user.password) {
-        console.log(`Original password: ${user.password}`); // Log the original password
-        user.password = await bcrypt.hash(user.password, 10);
-        console.log(`Hashed password: ${user.password}`); // Log the hashed password
+  
+    if (userData.password) {
+      console.log(`Original password length: ${userData.password.length}`);
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(userData.password, salt);
+      console.log('Hashed password during user creation:', user.password);
+    } else {
+      throw new BadRequestError("Password is required.");
     }
-
+  
     const errors = await validate(user);
     if (errors.length > 0) {
-        throw new BadRequestError(`Validation failed: ${errors.toString()}`);
+      throw new BadRequestError(`Validation failed: ${errors.toString()}`);
     }
-
-    user.emailVerificationToken = this.generateToken();
-    user.emailVerificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 saat geçerli
-
-    await this.userRepository.save(user);
-
-    await this.emailService.sendVerificationEmail(user.email, user.emailVerificationToken);
-
-    this.webSocketServer.broadcastToAll('new_user_registered', { userId: user.id });
-
-    return user;
-}
-
+  
+    const verificationToken = this.generateToken();
+    user.emailVerificationToken = verificationToken;
+    user.emailVerificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  
+    const savedUser = await this.userRepository.save(user);
+  
+    if (savedUser.email && verificationToken) {
+      await this.emailService.sendVerificationEmail(savedUser.email, verificationToken);
+    } else {
+      throw new BadRequestError("Failed to create user or generate verification token.");
+    }
+  
+    this.webSocketServer.broadcastToAll('new_user_registered', { userId: savedUser.id });
+  
+    return savedUser;
+  }
 
   async findUserByEmail(email: string): Promise<User> {
     console.log(`Finding user by email: ${email}`); // Log added here
@@ -71,17 +78,17 @@ export class UserService {
   async updateUser(id: string, userData: Partial<User>): Promise<User> {
     const user = await this.findUserById(id);
     if (userData.password) {
-        userData.password = await bcrypt.hash(userData.password, 10);
+      userData.password = await bcrypt.hash(userData.password, 10);
     }
     Object.assign(user, userData);
     const errors = await validate(user);
     if (errors.length > 0) {
-        throw new BadRequestError(`Validation failed: ${errors.toString()}`);
+      throw new BadRequestError(`Validation failed: ${errors.toString()}`);
     }
     const updatedUser = await this.userRepository.save(user);
     this.webSocketServer.sendToUser(id, 'user_updated', { userId: id });
     return updatedUser;
-}
+  }
 
   async deleteUser(id: string): Promise<void> {
     const result = await this.userRepository.delete(id);

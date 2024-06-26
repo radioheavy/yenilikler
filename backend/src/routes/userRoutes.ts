@@ -15,6 +15,10 @@ export default function userRoutes(webSocketServer: WebSocketServer) {
         userController.getUserByEmail(req, res, next)
     );
 
+    router.get("/:id", authenticateToken, (req, res, next) =>
+        userController.getUserById(req, res, next)
+    );
+
     router.put("/:id", authenticateToken, (req, res, next) =>
         userController.updateUser(req, res, next)
     );

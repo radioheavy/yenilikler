@@ -28,6 +28,15 @@ export class UserController {
         }
     }
 
+    async getUserById(req: Request, res: Response, next: NextFunction) {
+        try {
+            const user = await this.userService.findUserById(req.params.id);
+            res.json(user);
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async updateUser(req: Request, res: Response, next: NextFunction) {
         try {
             const user = await this.userService.updateUser(req.params.id, req.body);
@@ -48,8 +57,8 @@ export class UserController {
 
     async verifyEmail(req: Request, res: Response, next: NextFunction) {
         try {
-            const { email, token } = req.body; // req.params yerine req.body kullanalım
-            const user = await this.userService.verifyEmailCode(email, token); // verifyEmail yerine verifyEmailCode kullanalım
+            const { email, token } = req.body;
+            const user = await this.userService.verifyEmailCode(email, token);
             res.json({ message: "Email verified successfully", user });
         } catch (error) {
             next(error);
@@ -79,7 +88,7 @@ export class UserController {
 
     async resendVerificationEmail(req: Request, res: Response, next: NextFunction) {
         try {
-            const { email } = req.body; // req.body'den email alalım
+            const { email } = req.body;
             await this.userService.resendVerificationEmail(email);
             res.json({ message: "Verification email resent successfully" });
         } catch (error) {
