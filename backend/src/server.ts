@@ -14,6 +14,7 @@ import investorStatsRoutes from './routes/investorStatsRoutes';
 import shareDetailsRoutes from './routes/shareDetailsRoutes';
 import currencyDataRoutes from './routes/currencyDataRoutes';
 import companyRoutes from './routes/companyRoutes';
+import ipRoutes from './routes/ipRoutes';
 import { specs, swaggerUi } from './swagger';
 import debug from 'debug';
 import { loggerMiddleware } from './middlewares/logger.middleware';
@@ -87,6 +88,7 @@ AppDataSource.initialize()
     app.use('/api/financial-details', financialDetailsRoutes(webSocketServer));
     app.use('/api/investor-stats', investorStatsRoutes(webSocketServer));
     app.use('/api/share-details', shareDetailsRoutes(webSocketServer));
+    app.use('/api/ip', ipRoutes);  // Yeni IP rotası eklendi
 
     // Swagger UI
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
