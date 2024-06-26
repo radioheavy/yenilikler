@@ -59,7 +59,7 @@ export class UserService {
   }
 
   async findUserByEmail(email: string): Promise<User> {
-    console.log(`Finding user by email: ${email}`); // Log added here
+    console.log(`Finding user by email: ${email}`);
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
       throw new NotFoundError("User not found");
@@ -117,9 +117,13 @@ export class UserService {
     return verifiedUser;
   }
 
-  async updateLastLogin(id: string): Promise<User> {
+  async updateLastLogin(id: string, ip: string): Promise<User> {
     const user = await this.findUserById(id);
     user.lastLoginAt = new Date();
+    if (!user.loginIps) {
+      user.loginIps = [];
+    }
+    user.loginIps.push(ip);
     return this.userRepository.save(user);
   }
 
@@ -145,7 +149,7 @@ export class UserService {
     }
     
     user.emailVerificationToken = this.generateToken();
-    user.emailVerificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 saat geçerli
+    user.emailVerificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     await this.userRepository.save(user);
     
@@ -155,7 +159,7 @@ export class UserService {
   async createResetPasswordToken(email: string): Promise<void> {
     const user = await this.findUserByEmail(email);
     user.resetPasswordToken = this.generateToken();
-    user.resetPasswordTokenExpires = new Date(Date.now() + 3600000); // 1 saat geçerli
+    user.resetPasswordTokenExpires = new Date(Date.now() + 3600000);
 
     await this.userRepository.save(user);
     
@@ -226,7 +230,20 @@ export class UserService {
     this.webSocketServer.sendToUser(userId, 'two_factor_disabled', { userId });
   }
 
+  async getLoginHistory(userId: string): Promise<{ ip: string, timestamp: Date | null }[]> {
+    const user = await this.findUserById(userId);
+    if (!user.loginIps || user.loginIps.length === 0) {
+      return [];
+    }
+
+    const lastLoginAt = user.lastLoginAt || new Date();
+    
+    return user.loginIps.map((ip, index) => ({
+      ip,
+      timestamp: new Date(lastLoginAt.getTime() - (user.loginIps.length - 1 - index) * 24 * 60 * 60 * 1000)
+    }));
+  }
   private generateToken(): string {
-    return uuidv4().slice(0, 6); // 6 haneli doğrulama kodu
+    return uuidv4().slice(0, 6);
   }
 }

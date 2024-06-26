@@ -18,7 +18,8 @@ export class AuthController {
 
     async register(req: Request, res: Response, next: NextFunction) {
         try {
-            const user = await this.userService.createUser(req.body);
+            const ip = req.ip || req.socket.remoteAddress || 'Unknown';
+            const user = await this.userService.createUser({...req.body, registrationIp: ip});
             res.status(201).json({
                 message: "User registered successfully",
                 user: user.toJSON()
@@ -31,8 +32,9 @@ export class AuthController {
     async login(req: Request, res: Response, next: NextFunction) {
         try {
             const { email, password } = req.body;
+            const ip = req.ip || req.socket.remoteAddress || 'Unknown';
             console.log(`Login request received for email: ${email}`);
-            const result = await this.authService.login(email, password);
+            const result = await this.authService.login(email, password, ip);
             console.log('Login result:', result);
             res.json(result);
         } catch (error) {
@@ -84,7 +86,8 @@ export class AuthController {
     async verifyTwoFactorToken(req: Request, res: Response, next: NextFunction) {
         try {
             const { userId, token } = req.body;
-            const result = await this.authService.verifyTwoFactorToken(userId, token);
+            const ip = req.ip || req.socket.remoteAddress || 'Unknown';
+            const result = await this.authService.verifyTwoFactorToken(userId, token, ip);
             res.json(result);
         } catch (error) {
             next(error);
@@ -104,7 +107,8 @@ export class AuthController {
     async loginWithTwoFactor(req: Request, res: Response, next: NextFunction) {
         try {
             const { email, password, twoFactorToken } = req.body;
-            const result = await this.authService.loginWithTwoFactor(email, password, twoFactorToken);
+            const ip = req.ip || req.socket.remoteAddress || 'Unknown';
+            const result = await this.authService.loginWithTwoFactor(email, password, twoFactorToken, ip);
             res.json(result);
         } catch (error) {
             next(error);
@@ -133,17 +137,17 @@ export class AuthController {
         try {
             const user = req.user as User;
             const provider = req.query.provider as 'google' | 'facebook';
-            const result = await this.authService.handleSocialLogin(user, provider);
+            const ip = req.ip || req.socket.remoteAddress || 'Unknown';
+            const result = await this.authService.handleSocialLogin(user, provider, ip);
             res.redirect(`${process.env.FRONTEND_URL}/oauth-success?token=${result.token}&refreshToken=${result.refreshToken}`);
         } catch (error) {
             next(error);
         }
     }
 
-    // Eksik olan getCurrentUser metodunu ekleyelim
     async getCurrentUser(req: Request, res: Response, next: NextFunction) {
         try {
-            const userId = req.user.userId; // JWT'den gelen kullanıcı ID'si
+            const userId = req.user.userId;
             const user = await this.userService.findUserById(userId);
             if (!user) {
                 return res.status(404).json({ message: "User not found" });
@@ -154,10 +158,40 @@ export class AuthController {
         }
     }
 
-    // Yeni eklenen checkAuth metodu
     async checkAuth(req: Request, res: Response, next: NextFunction) {
         try {
             res.json({ isAuthenticated: true });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getLoginHistory(req: Request, res: Response, next: NextFunction) {
+        try {
+            const userId = req.user.userId;
+            const loginHistory = await this.userService.getLoginHistory(userId);
+            res.json(loginHistory);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getRegistrationIp(req: Request, res: Response, next: NextFunction) {
+        try {
+            const userId = req.user.userId;
+            const user = await this.userService.findUserById(userId);
+            res.json({ registrationIp: user.registrationIp });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async getLastLoginIp(req: Request, res: Response, next: NextFunction) {
+        try {
+            const userId = req.user.userId;
+            const loginHistory = await this.userService.getLoginHistory(userId);
+            const lastLoginIp = loginHistory.length > 0 ? loginHistory[loginHistory.length - 1].ip : null;
+            res.json({ lastLoginIp });
         } catch (error) {
             next(error);
         }

@@ -32,11 +32,21 @@ export default function authRoutes(webSocketServer: WebSocketServer) {
     router.post("/verify-email", authController.verifyEmail.bind(authController));
     router.post("/resend-verification", userController.resendVerificationEmail.bind(userController));
 
-    // Yeni eklenen kullanıcı bilgilerini getiren rota
+    // Kullanıcı bilgilerini getiren rota
     router.get('/user', authenticateToken, authController.getCurrentUser.bind(authController));
 
-    // Yeni eklenen check-auth rotası
+    // Check-auth rotası
     router.get('/check-auth', authenticateToken, authController.checkAuth.bind(authController));
+
+    // Yeni eklenen rotalar
+    // Kullanıcının giriş geçmişini getiren rota
+    router.get('/login-history', authenticateToken, authController.getLoginHistory.bind(authController));
+
+    // Kullanıcının kayıt IP adresini getiren rota
+    router.get('/registration-ip', authenticateToken, authController.getRegistrationIp.bind(authController));
+
+    // Kullanıcının son giriş IP adresini getiren rota
+    router.get('/last-login-ip', authenticateToken, authController.getLastLoginIp.bind(authController));
 
     return router;
 }

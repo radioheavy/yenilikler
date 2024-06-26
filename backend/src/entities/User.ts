@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import { IsEmail, MinLength, MaxLength } from "class-validator";
+import { IsEmail, MinLength, MaxLength, IsIP } from "class-validator";
 
 @Entity("users")
 export class User {
@@ -70,6 +70,13 @@ export class User {
   @Column({ nullable: true })
   facebookId?: string;
 
+  @Column({ nullable: true })
+  @IsIP()
+  registrationIp?: string;
+
+  @Column({ type: 'simple-array', default: [] })
+  loginIps: string[] = [];
+
   async validatePassword(password: string): Promise<boolean> {
     const bcrypt = require("bcrypt"); // bcrypt'i burada import ediyoruz
     return bcrypt.compare(password, this.password);
@@ -92,7 +99,9 @@ export class User {
       isTwoFactorEnabled: this.isTwoFactorEnabled,
       lastLoginAt: this.lastLoginAt ? this.lastLoginAt.toISOString() : null,
       createdAt: this.createdAt.toISOString(),
-      updatedAt: this.updatedAt.toISOString()
+      updatedAt: this.updatedAt.toISOString(),
+      registrationIp: this.registrationIp,
+      loginIps: this.loginIps
     };
   }
 }

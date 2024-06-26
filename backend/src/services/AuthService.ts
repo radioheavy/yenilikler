@@ -44,7 +44,7 @@ export class AuthService {
         );
     }
 
-    async login(email: string, password: string): Promise<{ user: User, token: string | null, refreshToken: string | null, requiresTwoFactor: boolean }> {
+    async login(email: string, password: string, ip: string): Promise<{ user: User, token: string | null, refreshToken: string | null, requiresTwoFactor: boolean }> {
         console.log(`Login attempt for email: ${email}`);
         try {
             const user = await this.validateUser(email, password);
@@ -59,7 +59,8 @@ export class AuthService {
             }
         
             user.lastLoginAt = new Date();
-            await this.userService.updateUser(user.id, { lastLoginAt: user.lastLoginAt });
+            user.loginIps = user.loginIps ? [...user.loginIps, ip] : [ip];
+            await this.userService.updateUser(user.id, { lastLoginAt: user.lastLoginAt, loginIps: user.loginIps });
             const token = this.generateToken(user);
             const refreshToken = this.generateRefreshToken(user);
             console.log('Login successful');
@@ -70,8 +71,7 @@ export class AuthService {
         }
     }
     
-
-    async loginWithTwoFactor(email: string, password: string, twoFactorToken: string): Promise<{ user: User, token: string, refreshToken: string }> {
+    async loginWithTwoFactor(email: string, password: string, twoFactorToken: string, ip: string): Promise<{ user: User, token: string, refreshToken: string }> {
         const user = await this.validateUser(email, password);
         if (!user) {
             throw new BadRequestError('Invalid email or password');
@@ -87,7 +87,8 @@ export class AuthService {
         }
 
         user.lastLoginAt = new Date();
-        await this.userService.updateUser(user.id, { lastLoginAt: user.lastLoginAt });
+        user.loginIps = user.loginIps ? [...user.loginIps, ip] : [ip];
+        await this.userService.updateUser(user.id, { lastLoginAt: user.lastLoginAt, loginIps: user.loginIps });
         const token = this.generateToken(user);
         const refreshToken = this.generateRefreshToken(user);
         return { user, token, refreshToken };
@@ -108,7 +109,7 @@ export class AuthService {
         }
     }
 
-    async verifyTwoFactorToken(userId: string, token: string): Promise<{ user: User, token: string, refreshToken: string }> {
+    async verifyTwoFactorToken(userId: string, token: string, ip: string): Promise<{ user: User, token: string, refreshToken: string }> {
         const isValid = await this.userService.verifyTwoFactorToken(userId, token);
         
         if (!isValid) {
@@ -117,7 +118,8 @@ export class AuthService {
 
         const user = await this.userService.findUserById(userId);
         user.lastLoginAt = new Date();
-        await this.userService.updateUser(user.id, { lastLoginAt: user.lastLoginAt });
+        user.loginIps = user.loginIps ? [...user.loginIps, ip] : [ip];
+        await this.userService.updateUser(user.id, { lastLoginAt: user.lastLoginAt, loginIps: user.loginIps });
 
         const jwtToken = this.generateToken(user);
         const refreshToken = this.generateRefreshToken(user);
@@ -133,7 +135,7 @@ export class AuthService {
         await this.userService.disableTwoFactor(userId);
     }
 
-    async handleSocialLogin(profile: any, provider: 'google' | 'facebook'): Promise<{ user: User, token: string, refreshToken: string }> {
+    async handleSocialLogin(profile: any, provider: 'google' | 'facebook', ip: string): Promise<{ user: User, token: string, refreshToken: string }> {
         let user = await this.userService.findUserByEmail(profile.emails[0].value);
         
         if (!user) {
@@ -143,14 +145,17 @@ export class AuthService {
                 lastName: profile.name.familyName,
                 isEmailVerified: true,
                 password: Math.random().toString(36).slice(-8), // Generate a random password
-                [provider + 'Id']: profile.id
+                [provider + 'Id']: profile.id,
+                registrationIp: ip,
+                loginIps: [ip]
             });
         } else if (!user[provider + 'Id']) {
             await this.userService.updateUser(user.id, { [provider + 'Id']: profile.id });
         }
 
         user.lastLoginAt = new Date();
-        await this.userService.updateUser(user.id, { lastLoginAt: user.lastLoginAt });
+        user.loginIps = user.loginIps ? [...user.loginIps, ip] : [ip];
+        await this.userService.updateUser(user.id, { lastLoginAt: user.lastLoginAt, loginIps: user.loginIps });
 
         const token = this.generateToken(user);
         const refreshToken = this.generateRefreshToken(user);
