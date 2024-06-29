@@ -1,8 +1,8 @@
-import { Repository } from "typeorm";
-import { FinancialDetails } from "../entities/FinancialDetails";
-import { InvestorStats } from "../entities/InvestorStats";
-import { CurrencyData } from "../entities/CurrencyData";
-import { Campaign } from "../entities/Campaign";
+import { Repository } from 'typeorm';
+import { FinancialDetails } from '../entities/FinancialDetails';
+import { InvestorStats } from '../entities/InvestorStats';
+import { CurrencyData } from '../entities/CurrencyData';
+import { Campaign } from '../entities/Campaign';
 
 export class FinancialDetailsService {
   private financialDetailsRepository: Repository<FinancialDetails>;
@@ -14,7 +14,7 @@ export class FinancialDetailsService {
     financialDetailsRepository: Repository<FinancialDetails>,
     investorStatsRepository: Repository<InvestorStats>,
     currencyDataRepository: Repository<CurrencyData>,
-    campaignRepository: Repository<Campaign>
+    campaignRepository: Repository<Campaign>,
   ) {
     this.financialDetailsRepository = financialDetailsRepository;
     this.investorStatsRepository = investorStatsRepository;
@@ -31,11 +31,14 @@ export class FinancialDetailsService {
   async getFinancialDetails(id: number): Promise<FinancialDetails | null> {
     return this.financialDetailsRepository.findOne({
       where: { id },
-      relations: ['campaign']
+      relations: ['campaign'],
     });
   }
 
-  async updateFinancialDetails(id: number, data: Partial<FinancialDetails>): Promise<FinancialDetails | null> {
+  async updateFinancialDetails(
+    id: number,
+    data: Partial<FinancialDetails>,
+  ): Promise<FinancialDetails | null> {
     await this.financialDetailsRepository.update(id, data);
     return this.getFinancialDetails(id);
   }
@@ -47,16 +50,22 @@ export class FinancialDetailsService {
   async calculateRealizationRate(id: number): Promise<number> {
     const financialDetails = await this.getFinancialDetails(id);
     if (!financialDetails) {
-      throw new Error("Financial details not found");
+      throw new Error('Financial details not found');
     }
-    return 1 - (financialDetails.targetAmount - financialDetails.raisedAmount) / financialDetails.targetAmount;
+    return (
+      1 -
+      (financialDetails.targetAmount - financialDetails.raisedAmount) /
+        financialDetails.targetAmount
+    );
   }
 
   async calculateAverageInvestmentAmount(id: number): Promise<number> {
     const financialDetails = await this.getFinancialDetails(id);
-    const investorStats = await this.investorStatsRepository.findOne({ where: { campaign: { id: financialDetails?.campaign.id } } });
+    const investorStats = await this.investorStatsRepository.findOne({
+      where: { campaign: { id: financialDetails?.campaign.id } },
+    });
     if (!financialDetails || !investorStats) {
-      throw new Error("Financial details or investor stats not found");
+      throw new Error('Financial details or investor stats not found');
     }
     const totalInvestors = investorStats.qualifiedInvestors + investorStats.nonQualifiedInvestors;
     return financialDetails.raisedAmount / totalInvestors;
@@ -65,7 +74,7 @@ export class FinancialDetailsService {
   async calculateExtraFundingAmount(id: number): Promise<number> {
     const financialDetails = await this.getFinancialDetails(id);
     if (!financialDetails) {
-      throw new Error("Financial details not found");
+      throw new Error('Financial details not found');
     }
     return Math.max(0, financialDetails.raisedAmount - financialDetails.targetAmount);
   }
@@ -73,35 +82,35 @@ export class FinancialDetailsService {
   async calculateRemainingFundingAmount(id: number): Promise<number> {
     const financialDetails = await this.getFinancialDetails(id);
     if (!financialDetails) {
-      throw new Error("Financial details not found");
+      throw new Error('Financial details not found');
     }
     return Math.max(0, financialDetails.targetAmount - financialDetails.raisedAmount);
   }
 
-  async calculateValuation(id: number): Promise<{ TRY: number, USD: number, EUR: number }> {
+  async calculateValuation(id: number): Promise<{ TRY: number; USD: number; EUR: number }> {
     const financialDetails = await this.getFinancialDetails(id);
     if (!financialDetails) {
-      throw new Error("Financial details not found");
+      throw new Error('Financial details not found');
     }
-    
+
     const campaign = await this.campaignRepository.findOne({
-      where: { id: financialDetails.campaign.id }
+      where: { id: financialDetails.campaign.id },
     });
     if (!campaign) {
-      throw new Error("Campaign not found");
+      throw new Error('Campaign not found');
     }
-    
+
     const currencyData = await this.currencyDataRepository.findOne({
-      where: { campaign: { id: campaign.id } }
+      where: { campaign: { id: campaign.id } },
     });
     if (!currencyData) {
-      throw new Error("Currency data not found");
+      throw new Error('Currency data not found');
     }
-    
+
     const valuationTRY = financialDetails.targetAmount / (campaign.offerRatio / 100);
     const valuationUSD = valuationTRY / currencyData.startDateUSDRate;
     const valuationEUR = valuationTRY / currencyData.startDateEURRate;
-    
+
     return { TRY: valuationTRY, USD: valuationUSD, EUR: valuationEUR };
   }
 }

@@ -11,7 +11,9 @@ export default (webSocketServer: WebSocketServer) => {
   router.put('/:id', (req, res) => investorStatsController.updateInvestorStats(req, res));
   router.delete('/:id', (req, res) => investorStatsController.deleteInvestorStats(req, res));
   router.get('/:id/total', (req, res) => investorStatsController.getTotalInvestors(req, res));
-  router.get('/:id/qualified-percentage', (req, res) => investorStatsController.getQualifiedInvestorPercentage(req, res));
+  router.get('/:id/qualified-percentage', (req, res) =>
+    investorStatsController.getQualifiedInvestorPercentage(req, res),
+  );
 
   return router;
 };

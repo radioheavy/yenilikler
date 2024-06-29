@@ -1,7 +1,7 @@
 // src/services/DatesService.ts
 
-import { Repository } from "typeorm";
-import { Dates } from "../entities/Dates";
+import { Repository } from 'typeorm';
+import { Dates } from '../entities/Dates';
 
 export class DatesService {
   private datesRepository: Repository<Dates>;
@@ -19,7 +19,7 @@ export class DatesService {
   async getDates(id: number): Promise<Dates | null> {
     return this.datesRepository.findOne({
       where: { id },
-      relations: ['campaign']
+      relations: ['campaign'],
     });
   }
 
@@ -35,7 +35,7 @@ export class DatesService {
   async calculateCampaignDuration(id: number): Promise<number> {
     const dates = await this.getDates(id);
     if (!dates) {
-      throw new Error("Dates not found");
+      throw new Error('Dates not found');
     }
     const duration = dates.endDate.getTime() - dates.startDate.getTime();
     return Math.ceil(duration / (1000 * 60 * 60 * 24)); // Convert milliseconds to days

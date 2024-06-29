@@ -3,7 +3,7 @@ export class BadRequestError extends Error {
 
   constructor(message: string) {
     super(message);
-    this.name = "BadRequestError";
+    this.name = 'BadRequestError';
     this.statusCode = 400;
 
     // Maintains proper stack trace for where our error was thrown (only available on V8)
@@ -21,7 +21,7 @@ export class NotFoundError extends Error {
 
   constructor(message: string) {
     super(message);
-    this.name = "NotFoundError";
+    this.name = 'NotFoundError';
     this.statusCode = 404;
 
     // Maintains proper stack trace for where our error was thrown (only available on V8)
@@ -39,7 +39,7 @@ export class UnauthorizedError extends Error {
 
   constructor(message: string) {
     super(message);
-    this.name = "UnauthorizedError";
+    this.name = 'UnauthorizedError';
     this.statusCode = 401;
 
     // Maintains proper stack trace for where our error was thrown (only available on V8)

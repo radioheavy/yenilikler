@@ -1,10 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert, BeforeUpdate } from "typeorm";
-import { IsEmail, MinLength, MaxLength } from "class-validator";
-import * as bcrypt from "bcrypt";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  BeforeInsert,
+  BeforeUpdate,
+} from 'typeorm';
+import { IsEmail, MinLength, MaxLength } from 'class-validator';
+import * as bcrypt from 'bcrypt';
 
-@Entity("users")
+@Entity('users')
 export class User {
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @Column({ unique: true })
@@ -33,7 +41,7 @@ export class User {
   @Column({ default: false })
   isEmailVerified!: boolean;
 
-  @Column({ default: "user" })
+  @Column({ default: 'user' })
   role!: string;
 
   @Column({ nullable: true, type: 'timestamp' })
@@ -92,7 +100,7 @@ export class User {
       isTwoFactorEnabled: this.isTwoFactorEnabled,
       lastLoginAt: this.lastLoginAt ? this.lastLoginAt.toISOString() : null,
       createdAt: this.createdAt.toISOString(),
-      updatedAt: this.updatedAt.toISOString()
+      updatedAt: this.updatedAt.toISOString(),
     };
   }
 }

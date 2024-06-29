@@ -35,7 +35,7 @@ winston.addColors(colors);
 const format = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss:ms' }),
   winston.format.colorize({ all: true }),
-  winston.format.printf((info) => `${info.timestamp} ${info.level}: ${info.message}`)
+  winston.format.printf((info) => `${info.timestamp} ${info.level}: ${info.message}`),
 );
 
 // Transport'ları oluşturalım
@@ -51,12 +51,12 @@ const transports = [
     handleExceptions: true,
   }),
   // Tüm loglar için genel bir dosya
-  new winston.transports.File({ 
+  new winston.transports.File({
     filename: path.join(logDir, 'all.log'),
     handleExceptions: true,
   }),
   // HTTP logları için ayrı bir dosya
-  new winston.transports.File({ 
+  new winston.transports.File({
     filename: path.join(logDir, 'http.log'),
     level: 'http',
     handleExceptions: true,
@@ -77,9 +77,7 @@ export const httpLogger = winston.createLogger({
   level: 'http',
   levels,
   format,
-  transports: [
-    new winston.transports.File({ filename: path.join(logDir, 'http.log') }),
-  ],
+  transports: [new winston.transports.File({ filename: path.join(logDir, 'http.log') })],
 });
 
 export default logger;

@@ -4,14 +4,17 @@ import { ExtendedError } from 'socket.io/dist/namespace';
 import { verifyToken, TokenPayload } from '../utils/jwt';
 import logger from '../utils/logger';
 
-export const socketAuthMiddleware = async (socket: Socket, next: (err?: ExtendedError | undefined) => void) => {
+export const socketAuthMiddleware = async (
+  socket: Socket,
+  next: (err?: ExtendedError | undefined) => void,
+) => {
   try {
     const token = socket.handshake.auth.token;
     if (!token) {
       logger.warn('Authentication error: No token provided');
       return next(new Error('Authentication error: No token provided'));
     }
-    const decoded = await verifyToken(token) as TokenPayload;
+    const decoded = (await verifyToken(token)) as TokenPayload;
     socket.data.user = decoded;
     next();
   } catch (error) {

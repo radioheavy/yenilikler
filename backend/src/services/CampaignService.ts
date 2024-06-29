@@ -1,5 +1,5 @@
-import { Repository } from "typeorm";
-import { Campaign } from "../entities/Campaign";
+import { Repository } from 'typeorm';
+import { Campaign } from '../entities/Campaign';
 
 export class CampaignService {
   private campaignRepository: Repository<Campaign>;
@@ -17,7 +17,14 @@ export class CampaignService {
   async getCampaign(id: number): Promise<Campaign | null> {
     return this.campaignRepository.findOne({
       where: { id },
-      relations: ['financialDetails', 'dates', 'investorStats', 'shareDetails', 'currencyData', 'company']
+      relations: [
+        'financialDetails',
+        'dates',
+        'investorStats',
+        'shareDetails',
+        'currencyData',
+        'company',
+      ],
     });
   }
 
@@ -32,14 +39,21 @@ export class CampaignService {
 
   async getAllCampaigns(): Promise<Campaign[]> {
     return this.campaignRepository.find({
-      relations: ['financialDetails', 'dates', 'investorStats', 'shareDetails', 'currencyData', 'company']
+      relations: [
+        'financialDetails',
+        'dates',
+        'investorStats',
+        'shareDetails',
+        'currencyData',
+        'company',
+      ],
     });
   }
 
   async calculateRemainingTime(id: number): Promise<number> {
     const campaign = await this.getCampaign(id);
     if (!campaign || !campaign.dates) {
-      throw new Error("Campaign or dates not found");
+      throw new Error('Campaign or dates not found');
     }
     const now = new Date();
     const endDate = new Date(campaign.dates.endDate);
@@ -50,13 +64,15 @@ export class CampaignService {
   async checkCampaignStatus(id: number): Promise<string> {
     const campaign = await this.getCampaign(id);
     if (!campaign || !campaign.dates || !campaign.financialDetails) {
-      throw new Error("Campaign, dates or financial details not found");
+      throw new Error('Campaign, dates or financial details not found');
     }
     const now = new Date();
     const endDate = new Date(campaign.dates.endDate);
     if (now > endDate) {
-      return campaign.financialDetails.raisedAmount >= campaign.financialDetails.targetAmount ? "Başarılı" : "Başarısız";
+      return campaign.financialDetails.raisedAmount >= campaign.financialDetails.targetAmount
+        ? 'Başarılı'
+        : 'Başarısız';
     }
-    return "Devam Ediyor";
+    return 'Devam Ediyor';
   }
 }

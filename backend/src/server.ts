@@ -5,7 +5,7 @@ import helmet from 'helmet';
 import csrf from 'csurf';
 import cookieParser from 'cookie-parser';
 import http from 'http';
-import { AppDataSource } from "./data-source";
+import { AppDataSource } from './data-source';
 import routes from './routes/index';
 import { specs, swaggerUi } from './swagger';
 import debug from 'debug';
@@ -25,24 +25,28 @@ const app = express();
 const csrfProtection = csrf({ cookie: true });
 
 // Helmet CSP ayarları
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'sha256-abc123'", "blob:"],
-      objectSrc: ["'none'"],
-      upgradeInsecureRequests: [],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'sha256-abc123'", 'blob:'],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
     },
-  },
-}));
+  }),
+);
 
 // Middleware
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3001',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
-}));
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || 'http://localhost:3001',
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+  }),
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -63,7 +67,7 @@ let webSocketServer: WebSocketServer;
 // Database connection and server start
 AppDataSource.initialize()
   .then(() => {
-    dbLog("Data Source has been initialized!");
+    dbLog('Data Source has been initialized!');
     const PORT = process.env.PORT || 3000;
 
     // Create HTTP server
@@ -79,8 +83,9 @@ AppDataSource.initialize()
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
     app.get('/', (req, res) => {
-      res.json({ 
-        message: "KiFoBu'dan Müthiş Haberler! Yeni işe alımlar yakında başlıyor. Ekibimize katıl ve birlikte geleceği inşa edelim. Bir yandan da bugları kovalayalım, eğlenceli günler bizi bekliyor! :)"
+      res.json({
+        message:
+          "KiFoBu'dan Müthiş Haberler! Yeni işe alımlar yakında başlıyor. Ekibimize katıl ve birlikte geleceği inşa edelim. Bir yandan da bugları kovalayalım, eğlenceli günler bizi bekliyor! :)",
       });
     });
 
@@ -103,7 +108,7 @@ AppDataSource.initialize()
     });
   })
   .catch((err) => {
-    dbLog("Error during Data Source initialization", err);
+    dbLog('Error during Data Source initialization', err);
   });
 
 export { webSocketServer };

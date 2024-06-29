@@ -1,7 +1,7 @@
 // src/services/InvestorStatsService.ts
 
-import { Repository } from "typeorm";
-import { InvestorStats } from "../entities/InvestorStats";
+import { Repository } from 'typeorm';
+import { InvestorStats } from '../entities/InvestorStats';
 
 export class InvestorStatsService {
   private investorStatsRepository: Repository<InvestorStats>;
@@ -19,11 +19,14 @@ export class InvestorStatsService {
   async getInvestorStats(id: number): Promise<InvestorStats | null> {
     return this.investorStatsRepository.findOne({
       where: { id },
-      relations: ['campaign']
+      relations: ['campaign'],
     });
   }
 
-  async updateInvestorStats(id: number, data: Partial<InvestorStats>): Promise<InvestorStats | null> {
+  async updateInvestorStats(
+    id: number,
+    data: Partial<InvestorStats>,
+  ): Promise<InvestorStats | null> {
     await this.investorStatsRepository.update(id, data);
     return this.getInvestorStats(id);
   }
@@ -35,7 +38,7 @@ export class InvestorStatsService {
   async calculateTotalInvestors(id: number): Promise<number> {
     const stats = await this.getInvestorStats(id);
     if (!stats) {
-      throw new Error("Investor stats not found");
+      throw new Error('Investor stats not found');
     }
     return stats.qualifiedInvestors + stats.nonQualifiedInvestors;
   }
@@ -43,7 +46,7 @@ export class InvestorStatsService {
   async calculateQualifiedInvestorPercentage(id: number): Promise<number> {
     const stats = await this.getInvestorStats(id);
     if (!stats) {
-      throw new Error("Investor stats not found");
+      throw new Error('Investor stats not found');
     }
     const total = stats.qualifiedInvestors + stats.nonQualifiedInvestors;
     return (stats.qualifiedInvestors / total) * 100;

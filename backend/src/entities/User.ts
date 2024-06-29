@@ -1,11 +1,17 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from "typeorm";
-import { IsEmail, MinLength, MaxLength, IsIP } from "class-validator";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { IsEmail, MinLength, MaxLength, IsIP } from 'class-validator';
 
-@Entity("users")
+@Entity('users')
 export class User {
   [key: string]: any; // Dinamik indeksleme için tür tanımı
 
-  @PrimaryGeneratedColumn("uuid")
+  @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @Column({ unique: true })
@@ -34,7 +40,7 @@ export class User {
   @Column({ default: false })
   isEmailVerified!: boolean;
 
-  @Column({ default: "user" })
+  @Column({ default: 'user' })
   role!: string;
 
   @Column({ nullable: true, type: 'timestamp' })
@@ -78,7 +84,7 @@ export class User {
   loginIps: string[] = [];
 
   async validatePassword(password: string): Promise<boolean> {
-    const bcrypt = require("bcrypt"); // bcrypt'i burada import ediyoruz
+    const bcrypt = require('bcrypt'); // bcrypt'i burada import ediyoruz
     return bcrypt.compare(password, this.password);
   }
 
@@ -101,7 +107,7 @@ export class User {
       createdAt: this.createdAt.toISOString(),
       updatedAt: this.updatedAt.toISOString(),
       registrationIp: this.registrationIp,
-      loginIps: this.loginIps
+      loginIps: this.loginIps,
     };
   }
 }

@@ -1,15 +1,15 @@
-import { Request, Response } from 'express';
-import { CampaignService } from '../services/CampaignService';
-import { AppDataSource } from '../data-source';  // AppDataSource import et
-import { Campaign } from '../entities/Campaign';
-import { WebSocketServer } from '../websocket/socketServer';
+import { Request, Response } from "express";
+import { CampaignService } from "../services/CampaignService";
+import { AppDataSource } from "../data-source"; // AppDataSource import et
+import { Campaign } from "../entities/Campaign";
+import { WebSocketServer } from "../websocket/socketServer";
 
 export class CampaignController {
   private campaignService: CampaignService;
   private webSocketServer: WebSocketServer;
 
   constructor(webSocketServer: WebSocketServer) {
-    const campaignRepository = AppDataSource.getRepository(Campaign);  // getRepository değiştir
+    const campaignRepository = AppDataSource.getRepository(Campaign); // getRepository değiştir
     this.campaignService = new CampaignService(campaignRepository);
     this.webSocketServer = webSocketServer;
   }
@@ -17,7 +17,7 @@ export class CampaignController {
   async createCampaign(req: Request, res: Response): Promise<void> {
     try {
       const campaign = await this.campaignService.createCampaign(req.body);
-      this.webSocketServer.emit('campaignCreated', campaign);
+      this.webSocketServer.emit("campaignCreated", campaign);
       res.status(201).json(campaign);
     } catch (error) {
       res.status(500).json({ message: "Error creating campaign", error });
@@ -26,7 +26,9 @@ export class CampaignController {
 
   async getCampaign(req: Request, res: Response): Promise<void> {
     try {
-      const campaign = await this.campaignService.getCampaign(Number(req.params.id));
+      const campaign = await this.campaignService.getCampaign(
+        Number(req.params.id),
+      );
       if (campaign) {
         res.json(campaign);
       } else {
@@ -39,9 +41,12 @@ export class CampaignController {
 
   async updateCampaign(req: Request, res: Response): Promise<void> {
     try {
-      const campaign = await this.campaignService.updateCampaign(Number(req.params.id), req.body);
+      const campaign = await this.campaignService.updateCampaign(
+        Number(req.params.id),
+        req.body,
+      );
       if (campaign) {
-        this.webSocketServer.emit('campaignUpdated', campaign);
+        this.webSocketServer.emit("campaignUpdated", campaign);
         res.json(campaign);
       } else {
         res.status(404).json({ message: "Campaign not found" });
@@ -54,7 +59,7 @@ export class CampaignController {
   async deleteCampaign(req: Request, res: Response): Promise<void> {
     try {
       await this.campaignService.deleteCampaign(Number(req.params.id));
-      this.webSocketServer.emit('campaignDeleted', Number(req.params.id));
+      this.webSocketServer.emit("campaignDeleted", Number(req.params.id));
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Error deleting campaign", error });

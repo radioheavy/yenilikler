@@ -23,9 +23,9 @@ export class WebSocketServer {
     this.io = new SocketServer(server, {
       cors: {
         origin: process.env.CLIENT_URL,
-        methods: ["GET", "POST"],
-        credentials: true
-      }
+        methods: ['GET', 'POST'],
+        credentials: true,
+      },
     });
 
     this.io.use(socketAuthMiddleware);
@@ -45,7 +45,7 @@ export class WebSocketServer {
         try {
           this.io.to(`user_${data.to}`).emit('private_message', {
             from: socket.data.user.userId,
-            message: data.message
+            message: data.message,
           });
         } catch (error) {
           logger.error(`Error sending private message: ${error}`);
@@ -56,7 +56,7 @@ export class WebSocketServer {
         try {
           this.io.emit('broadcast_message', {
             from: socket.data.user.userId,
-            message: data.message
+            message: data.message,
           });
         } catch (error) {
           logger.error(`Error broadcasting message: ${error}`);

@@ -21,12 +21,12 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
   const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
-    return next(new UnauthorizedError("No token provided"));
+    return next(new UnauthorizedError('No token provided'));
   }
 
   jwt.verify(token, process.env.JWT_SECRET as string, (err, user) => {
     if (err) {
-      return next(new UnauthorizedError("Invalid or expired token"));
+      return next(new UnauthorizedError('Invalid or expired token'));
     }
     req.user = user as TokenPayload;
     next();

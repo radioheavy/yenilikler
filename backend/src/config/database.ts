@@ -1,6 +1,6 @@
 import { DataSourceOptions } from "typeorm";
-import dotenv from 'dotenv';
-import { User } from '../entities/User';
+import dotenv from "dotenv";
+import { User } from "../entities/User";
 import { Campaign } from "../entities/Campaign";
 import { Company } from "../entities/Company";
 import { CurrencyData } from "../entities/CurrencyData";
@@ -18,9 +18,18 @@ const config: DataSourceOptions = {
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-  entities: [User, Campaign, Company, CurrencyData,Dates, FinancialDetails,InvestorStats, ShareDetails],
+  entities: [
+    User,
+    Campaign,
+    Company,
+    CurrencyData,
+    Dates,
+    FinancialDetails,
+    InvestorStats,
+    ShareDetails,
+  ],
   synchronize: true,
-  logging: false
+  logging: false,
 };
 
 export default config;

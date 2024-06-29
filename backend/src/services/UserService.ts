@@ -1,10 +1,10 @@
-import { AppDataSource } from "../data-source";
-import { User } from "../entities/User";
-import { validate } from "class-validator";
-import { BadRequestError, NotFoundError, UnauthorizedError } from "../utils/errors";
-import * as bcrypt from "bcrypt";
+import { AppDataSource } from '../data-source';
+import { User } from '../entities/User';
+import { validate } from 'class-validator';
+import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/errors';
+import * as bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import { EmailService } from "./EmailService";
+import { EmailService } from './EmailService';
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
 import { WebSocketServer } from '../websocket/socketServer';
@@ -22,39 +22,39 @@ export class UserService {
   async createUser(userData: Partial<User>): Promise<User> {
     const existingUser = await this.userRepository.findOne({ where: { email: userData.email } });
     if (existingUser) {
-      throw new BadRequestError("A user with this email already exists.");
+      throw new BadRequestError('A user with this email already exists.');
     }
-  
+
     const user = this.userRepository.create(userData);
-  
+
     if (userData.password) {
       console.log(`Original password length: ${userData.password.length}`);
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(userData.password, salt);
       console.log('Hashed password during user creation:', user.password);
     } else {
-      throw new BadRequestError("Password is required.");
+      throw new BadRequestError('Password is required.');
     }
-  
+
     const errors = await validate(user);
     if (errors.length > 0) {
       throw new BadRequestError(`Validation failed: ${errors.toString()}`);
     }
-  
+
     const verificationToken = this.generateToken();
     user.emailVerificationToken = verificationToken;
     user.emailVerificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  
+
     const savedUser = await this.userRepository.save(user);
-  
+
     if (savedUser.email && verificationToken) {
       await this.emailService.sendVerificationEmail(savedUser.email, verificationToken);
     } else {
-      throw new BadRequestError("Failed to create user or generate verification token.");
+      throw new BadRequestError('Failed to create user or generate verification token.');
     }
-  
+
     this.webSocketServer.broadcastToAll('new_user_registered', { userId: savedUser.id });
-  
+
     return savedUser;
   }
 
@@ -62,7 +62,7 @@ export class UserService {
     console.log(`Finding user by email: ${email}`);
     const user = await this.userRepository.findOne({ where: { email } });
     if (!user) {
-      throw new NotFoundError("User not found");
+      throw new NotFoundError('User not found');
     }
     return user;
   }
@@ -70,7 +70,7 @@ export class UserService {
   async findUserById(id: string): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) {
-      throw new NotFoundError("User not found");
+      throw new NotFoundError('User not found');
     }
     return user;
   }
@@ -93,25 +93,27 @@ export class UserService {
   async deleteUser(id: string): Promise<void> {
     const result = await this.userRepository.delete(id);
     if (result.affected === 0) {
-      throw new NotFoundError("User not found");
+      throw new NotFoundError('User not found');
     }
     this.webSocketServer.broadcastToAll('user_deleted', { userId: id });
   }
 
   async verifyEmailCode(email: string, token: string): Promise<User> {
-    const user = await this.userRepository.findOne({ where: { email, emailVerificationToken: token } });
+    const user = await this.userRepository.findOne({
+      where: { email, emailVerificationToken: token },
+    });
     if (!user) {
-      throw new NotFoundError("Invalid verification token");
+      throw new NotFoundError('Invalid verification token');
     }
-    
+
     if (user.emailVerificationTokenExpires && user.emailVerificationTokenExpires < new Date()) {
-      throw new BadRequestError("Verification token has expired");
+      throw new BadRequestError('Verification token has expired');
     }
-    
+
     user.isEmailVerified = true;
     user.emailVerificationToken = undefined;
     user.emailVerificationTokenExpires = undefined;
-    
+
     const verifiedUser = await this.userRepository.save(user);
     this.webSocketServer.sendToUser(verifiedUser.id, 'email_verified', { userId: verifiedUser.id });
     return verifiedUser;
@@ -127,11 +129,15 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
     const user = await this.findUserById(userId);
     const isPasswordValid = await user.validatePassword(currentPassword);
     if (!isPasswordValid) {
-      throw new UnauthorizedError("Current password is incorrect");
+      throw new UnauthorizedError('Current password is incorrect');
     }
     user.password = await bcrypt.hash(newPassword, 10);
     const errors = await validate(user);
@@ -145,14 +151,14 @@ export class UserService {
   async resendVerificationEmail(email: string): Promise<void> {
     const user = await this.findUserByEmail(email);
     if (user.isEmailVerified) {
-      throw new BadRequestError("Email is already verified");
+      throw new BadRequestError('Email is already verified');
     }
-    
+
     user.emailVerificationToken = this.generateToken();
     user.emailVerificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     await this.userRepository.save(user);
-    
+
     await this.emailService.sendVerificationEmail(user.email, user.emailVerificationToken);
   }
 
@@ -162,14 +168,14 @@ export class UserService {
     user.resetPasswordTokenExpires = new Date(Date.now() + 3600000);
 
     await this.userRepository.save(user);
-    
+
     await this.emailService.sendResetPasswordEmail(user.email, user.resetPasswordToken);
   }
 
   async resetPassword(token: string, newPassword: string): Promise<User> {
     const user = await this.userRepository.findOne({ where: { resetPasswordToken: token } });
     if (!user || !user.resetPasswordTokenExpires || user.resetPasswordTokenExpires < new Date()) {
-      throw new BadRequestError("Invalid or expired password reset token");
+      throw new BadRequestError('Invalid or expired password reset token');
     }
 
     user.password = await bcrypt.hash(newPassword, 10);
@@ -186,14 +192,18 @@ export class UserService {
     return updatedUser;
   }
 
-  async generateTwoFactorSecret(userId: string): Promise<{ secret: string, otpauthUrl: string, qrCodeUrl: string }> {
+  async generateTwoFactorSecret(
+    userId: string,
+  ): Promise<{ secret: string; otpauthUrl: string; qrCodeUrl: string }> {
     const user = await this.findUserById(userId);
-    
+
     const secret = speakeasy.generateSecret({ name: `YourAppName:${user.email}` });
     user.twoFactorSecret = secret.base32;
     await this.userRepository.save(user);
 
-    const otpauthUrl = secret.otpauth_url || `otpauth://totp/YourAppName:${user.email}?secret=${secret.base32}&issuer=YourAppName`;
+    const otpauthUrl =
+      secret.otpauth_url ||
+      `otpauth://totp/YourAppName:${user.email}?secret=${secret.base32}&issuer=YourAppName`;
     const qrCodeUrl = await qrcode.toDataURL(otpauthUrl);
 
     this.webSocketServer.sendToUser(userId, 'two_factor_secret_generated', { userId });
@@ -202,15 +212,15 @@ export class UserService {
 
   async verifyTwoFactorToken(userId: string, token: string): Promise<boolean> {
     const user = await this.findUserById(userId);
-    
+
     if (!user.twoFactorSecret) {
-      throw new BadRequestError("Two-factor authentication is not set up for this user");
+      throw new BadRequestError('Two-factor authentication is not set up for this user');
     }
 
     const verified = speakeasy.totp.verify({
       secret: user.twoFactorSecret,
       encoding: 'base32',
-      token: token
+      token: token,
     });
 
     if (verified) {
@@ -230,17 +240,19 @@ export class UserService {
     this.webSocketServer.sendToUser(userId, 'two_factor_disabled', { userId });
   }
 
-  async getLoginHistory(userId: string): Promise<{ ip: string, timestamp: Date | null }[]> {
+  async getLoginHistory(userId: string): Promise<{ ip: string; timestamp: Date | null }[]> {
     const user = await this.findUserById(userId);
     if (!user.loginIps || user.loginIps.length === 0) {
       return [];
     }
 
     const lastLoginAt = user.lastLoginAt || new Date();
-    
+
     return user.loginIps.map((ip, index) => ({
       ip,
-      timestamp: new Date(lastLoginAt.getTime() - (user.loginIps.length - 1 - index) * 24 * 60 * 60 * 1000)
+      timestamp: new Date(
+        lastLoginAt.getTime() - (user.loginIps.length - 1 - index) * 24 * 60 * 60 * 1000,
+      ),
     }));
   }
   private generateToken(): string {

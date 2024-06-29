@@ -1,7 +1,7 @@
 // src/services/CompanyService.ts
 
-import { Repository } from "typeorm";
-import { Company } from "../entities/Company";
+import { Repository } from 'typeorm';
+import { Company } from '../entities/Company';
 
 export class CompanyService {
   private companyRepository: Repository<Company>;
@@ -19,7 +19,7 @@ export class CompanyService {
   async getCompany(id: number): Promise<Company | null> {
     return this.companyRepository.findOne({
       where: { id },
-      relations: ['campaign']
+      relations: ['campaign'],
     });
   }
 
@@ -39,7 +39,7 @@ export class CompanyService {
   async getCompanySocialMediaLinks(id: number): Promise<Partial<Company>> {
     const company = await this.getCompany(id);
     if (!company) {
-      throw new Error("Company not found");
+      throw new Error('Company not found');
     }
     return {
       facebookLink: company.facebookLink,
@@ -47,7 +47,7 @@ export class CompanyService {
       linkedinLink: company.linkedinLink,
       twitterLink: company.twitterLink,
       fundingPageLink: company.fundingPageLink,
-      websiteLink: company.websiteLink
+      websiteLink: company.websiteLink,
     };
   }
 }

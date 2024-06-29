@@ -1,21 +1,21 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from "typeorm";
-import { Campaign } from "./Campaign";
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
+import { Campaign } from './Campaign';
 
 @Entity()
 export class InvestorStats {
-    @PrimaryGeneratedColumn()
-    id: number;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-    @Column()
-    totalInvestors: number;
+  @Column()
+  totalInvestors: number;
 
-    @Column()
-    qualifiedInvestors: number;
+  @Column()
+  qualifiedInvestors: number;
 
-    @Column()
-    nonQualifiedInvestors: number;
+  @Column()
+  nonQualifiedInvestors: number;
 
-    @OneToOne(() => Campaign, campaign => campaign.investorStats)
-    @JoinColumn()
-    campaign: Campaign;
+  @OneToOne(() => Campaign, (campaign) => campaign.investorStats)
+  @JoinColumn()
+  campaign: Campaign;
 }
