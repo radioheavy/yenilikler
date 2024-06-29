@@ -1,13 +1,25 @@
-// src/websocket/socketServer.ts
 import { Server as HttpServer } from 'http';
 import { Server as SocketServer, Socket } from 'socket.io';
 import { socketAuthMiddleware } from '../middlewares/socketAuth.middleware';
 import logger from '../utils/logger';
 
+interface PrivateMessagePayload {
+  to: string;
+  message: string;
+}
+
+interface BroadcastMessagePayload {
+  message: string;
+}
+
 export class WebSocketServer {
   private io: SocketServer;
 
   constructor(server: HttpServer) {
+    if (!process.env.CLIENT_URL) {
+      throw new Error('CLIENT_URL environment variable is missing');
+    }
+
     this.io = new SocketServer(server, {
       cors: {
         origin: process.env.CLIENT_URL,
@@ -21,7 +33,6 @@ export class WebSocketServer {
     this.io.on('connection', (socket: Socket) => {
       logger.info(`New client connected: ${socket.id}`);
 
-      // Kullanıcıyı özel bir odaya ekle
       if (socket.data.user && socket.data.user.userId) {
         socket.join(`user_${socket.data.user.userId}`);
       }
@@ -30,20 +41,26 @@ export class WebSocketServer {
         logger.info(`Client disconnected: ${socket.id}`);
       });
 
-      // Örnek: Özel mesaj gönderme
-      socket.on('private_message', (data: { to: string, message: string }) => {
-        this.io.to(`user_${data.to}`).emit('private_message', {
-          from: socket.data.user.userId,
-          message: data.message
-        });
+      socket.on('private_message', (data: PrivateMessagePayload) => {
+        try {
+          this.io.to(`user_${data.to}`).emit('private_message', {
+            from: socket.data.user.userId,
+            message: data.message
+          });
+        } catch (error) {
+          logger.error(`Error sending private message: ${error}`);
+        }
       });
 
-      // Örnek: Genel mesaj yayınlama
-      socket.on('broadcast_message', (message: string) => {
-        this.io.emit('broadcast_message', {
-          from: socket.data.user.userId,
-          message: message
-        });
+      socket.on('broadcast_message', (data: BroadcastMessagePayload) => {
+        try {
+          this.io.emit('broadcast_message', {
+            from: socket.data.user.userId,
+            message: data.message
+          });
+        } catch (error) {
+          logger.error(`Error broadcasting message: ${error}`);
+        }
       });
 
       // Diğer olay dinleyicileri buraya eklenebilir
@@ -54,18 +71,27 @@ export class WebSocketServer {
     return this.io;
   }
 
-  // Belirli bir kullanıcıya mesaj gönderme metodu
   public sendToUser(userId: string, event: string, data: any): void {
-    this.io.to(`user_${userId}`).emit(event, data);
+    try {
+      this.io.to(`user_${userId}`).emit(event, data);
+    } catch (error) {
+      logger.error(`Error sending message to user ${userId}: ${error}`);
+    }
   }
 
-  // Tüm bağlı kullanıcılara mesaj yayınlama metodu
   public broadcastToAll(event: string, data: any): void {
-    this.io.emit(event, data);
+    try {
+      this.io.emit(event, data);
+    } catch (error) {
+      logger.error(`Error broadcasting to all users: ${error}`);
+    }
   }
 
-  // 'emit' metodu ekleme
   public emit(event: string, data: any): void {
-    this.io.emit(event, data);
+    try {
+      this.io.emit(event, data);
+    } catch (error) {
+      logger.error(`Error emitting event ${event}: ${error}`);
+    }
   }
 }

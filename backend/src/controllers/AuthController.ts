@@ -75,7 +75,7 @@ export class AuthController {
 
     async generateTwoFactorSecret(req: Request, res: Response, next: NextFunction) {
         try {
-            const userId = req.user.userId;
+            const userId = req.user!.userId; // req.user'ın kesinlikle tanımlı olduğunu belirtmek için '!' operatörü kullanıldı.
             const result = await this.userService.generateTwoFactorSecret(userId);
             res.json(result);
         } catch (error) {
@@ -96,7 +96,7 @@ export class AuthController {
 
     async disableTwoFactor(req: Request, res: Response, next: NextFunction) {
         try {
-            const userId = req.user.userId;
+            const userId = req.user!.userId;
             await this.userService.disableTwoFactor(userId);
             res.json({ message: "Two-factor authentication disabled successfully" });
         } catch (error) {
@@ -135,7 +135,7 @@ export class AuthController {
 
     async oauthCallback(req: Request, res: Response, next: NextFunction) {
         try {
-            const user = req.user as User;
+            const user = req.user as unknown as User;
             const provider = req.query.provider as 'google' | 'facebook';
             const ip = req.ip || req.socket.remoteAddress || 'Unknown';
             const result = await this.authService.handleSocialLogin(user, provider, ip);
@@ -147,7 +147,7 @@ export class AuthController {
 
     async getCurrentUser(req: Request, res: Response, next: NextFunction) {
         try {
-            const userId = req.user.userId;
+            const userId = req.user!.userId;
             const user = await this.userService.findUserById(userId);
             if (!user) {
                 return res.status(404).json({ message: "User not found" });
@@ -168,7 +168,7 @@ export class AuthController {
 
     async getLoginHistory(req: Request, res: Response, next: NextFunction) {
         try {
-            const userId = req.user.userId;
+            const userId = req.user!.userId;
             const loginHistory = await this.userService.getLoginHistory(userId);
             res.json(loginHistory);
         } catch (error) {
@@ -178,7 +178,7 @@ export class AuthController {
 
     async getRegistrationIp(req: Request, res: Response, next: NextFunction) {
         try {
-            const userId = req.user.userId;
+            const userId = req.user!.userId;
             const user = await this.userService.findUserById(userId);
             res.json({ registrationIp: user.registrationIp });
         } catch (error) {
@@ -188,7 +188,7 @@ export class AuthController {
 
     async getLastLoginIp(req: Request, res: Response, next: NextFunction) {
         try {
-            const userId = req.user.userId;
+            const userId = req.user!.userId;
             const loginHistory = await this.userService.getLoginHistory(userId);
             const lastLoginIp = loginHistory.length > 0 ? loginHistory[loginHistory.length - 1].ip : null;
             res.json({ lastLoginIp });
