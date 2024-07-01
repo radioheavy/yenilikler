@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import passport from "passport";
-import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { Strategy as FacebookStrategy } from "passport-facebook";
-import { UserService } from "../services/UserService";
-import { webSocketServer } from "../server"; // WebSocketServer instance'ını import ediyoruz
+import passport from 'passport';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { Strategy as FacebookStrategy } from 'passport-facebook';
+import { UserService } from '../services/UserService';
+import { webSocketServer } from '../server'; // WebSocketServer instance'ını import ediyoruz
 
 const userService = new UserService(webSocketServer);
 
@@ -48,7 +48,7 @@ passport.use(
       clientID: process.env.FACEBOOK_APP_ID!,
       clientSecret: process.env.FACEBOOK_APP_SECRET!,
       callbackURL: process.env.FACEBOOK_CALLBACK_URL!, // Çevre değişkeninden okuyoruz
-      profileFields: ["id", "emails", "name"],
+      profileFields: ['id', 'emails', 'name'],
     },
     async (
       accessToken: string,

@@ -258,4 +258,8 @@ export class UserService {
   private generateToken(): string {
     return uuidv4().slice(0, 6);
   }
+
+  async getAllUsers(): Promise<User[]> {
+    return this.userRepository.find();
+  }
 }

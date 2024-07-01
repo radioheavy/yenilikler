@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../services/UserService';
 import { BadRequestError, NotFoundError } from '../utils/errors';
@@ -126,6 +128,15 @@ export class UserController {
       const userId = (req as any).user.id;
       await this.userService.disableTwoFactor(userId);
       res.json({ message: 'Two-factor authentication disabled successfully' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getAllUsers(req: Request, res: Response, next: NextFunction) {
+    try {
+      const users = await this.userService.getAllUsers();
+      res.json(users);
     } catch (error) {
       next(error);
     }
