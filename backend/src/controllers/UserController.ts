@@ -50,8 +50,9 @@ export class UserController {
 
   async deleteUser(req: Request, res: Response, next: NextFunction) {
     try {
-      await this.userService.deleteUser(req.params.id);
-      res.status(204).send();
+      const userId = req.params.id;
+      await this.userService.deleteUser(userId);
+      res.status(200).json({ message: 'User deleted successfully' });
     } catch (error) {
       next(error);
     }
